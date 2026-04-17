@@ -1,6 +1,6 @@
 import React from 'react';
 import { Users, BookOpen, Clock, AlertCircle, ArrowUpRight } from 'lucide-react';
-
+import axios from '../api/axios.js'
 const StatCard = ({ title, value, icon: Icon, color, trend }) => (
   <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow duration-300">
     <div className="flex justify-between items-start mb-4">
@@ -18,37 +18,40 @@ const StatCard = ({ title, value, icon: Icon, color, trend }) => (
 );
 
 const Dashboard = () => {
+
+  // const rishitest = axios.get('https://jsonplaceholder.typicode.com/users')
+  // alert(rishitest.data)
   return (
     <div className="space-y-8">
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard 
-          title="Total Members" 
-          value="12,482" 
-          icon={Users} 
-          color="bg-blue-500" 
-          trend="+12%" 
+        <StatCard
+          title="Total Members"
+          value="12,482"
+          icon={Users}
+          color="bg-blue-200"
+          trend="+12%"
         />
-        <StatCard 
-          title="Total Books" 
-          value="45,210" 
-          icon={BookOpen} 
-          color="bg-emerald-500" 
-          trend="+4%" 
+        <StatCard
+          title="Total Books"
+          value="45,210"
+          icon={BookOpen}
+          color="bg-emerald-200"
+          trend="+4%"
         />
-        <StatCard 
-          title="Issued Today" 
-          value="342" 
-          icon={Clock} 
-          color="bg-amber-500" 
-          trend="+8%" 
+        <StatCard
+          title="Issued Today"
+          value="342"
+          icon={Clock}
+          color="bg-amber-200"
+          trend="+8%"
         />
-        <StatCard 
-          title="Overdue Items" 
-          value="56" 
-          icon={AlertCircle} 
-          color="bg-rose-500" 
-          trend="-2%" 
+        <StatCard
+          title="Overdue Items"
+          value="56"
+          icon={AlertCircle}
+          color="bg-rose-200"
+          trend="-2%"
         />
       </div>
 
@@ -79,7 +82,7 @@ const Dashboard = () => {
                   <tr key={idx} className="hover:bg-slate-50 transition-colors">
                     <td className="px-6 py-4 flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-600">
-                        {txn.user.split(' ').map(n=>n[0]).join('')}
+                        {txn.user.split(' ').map(n => n[0]).join('')}
                       </div>
                       <span className="font-medium text-slate-800">{txn.user}</span>
                     </td>

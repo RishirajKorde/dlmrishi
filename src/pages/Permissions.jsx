@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { 
-  ShieldCheck, 
-  Save, 
-  Lock, 
-  Unlock, 
+import {
+  ShieldCheck,
+  Save,
+  Lock,
+  Unlock,
   ChevronRight,
   Settings2
 } from 'lucide-react';
@@ -55,15 +55,15 @@ const Permissions = () => {
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-blue-600 font-bold text-xs uppercase tracking-widest">
             <Settings2 size={14} />
-            <span>ACL Settings</span>
+            <span>Permission Settings</span>
           </div>
           <h3 className="text-2xl font-black text-slate-900">Module Access Control</h3>
-          <p className="text-sm text-slate-500 font-medium">Define fine-grained permissions for each library role.</p>
+          {/* <p className="text-sm text-slate-500 font-medium">Define fine-grained permissions for each library role.</p> */}
         </div>
 
         <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
           <div className="w-full sm:w-64">
-            <Select 
+            <Select
               value={selectedRole}
               onChange={e => setSelectedRole(e.target.value)}
               options={roles}
@@ -101,28 +101,16 @@ const Permissions = () => {
                       <span className="font-bold text-slate-800 text-base">{mod.name}</span>
                     </div>
                   </td>
-                  
+
                   {['view', 'add', 'edit', 'update', 'delete'].map((type) => (
                     <td key={type} className="px-6 py-5">
                       <div className="flex justify-center">
-                        <label className="relative inline-flex items-center cursor-pointer group/toggle">
-                          <input 
-                            type="checkbox" 
-                            className="sr-only peer"
-                            checked={mod.permissions[type] || false}
-                            onChange={() => togglePermission(mod.id, type)}
-                          />
-                          <div className={`
-                            w-12 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer 
-                            peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[4px] after:left-[4px] 
-                            after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all 
-                            peer-checked:bg-blue-600 transition-all duration-300
-                          `}></div>
-                          <div className="absolute -top-8 bg-slate-800 text-white text-[10px] px-2 py-0.5 rounded opacity-0 group-hover/toggle:opacity-100 transition-all pointer-events-none capitalize">
-                            {mod.permissions[type] ? <Unlock size={10} className="inline mr-1" /> : <Lock size={10} className="inline mr-1" />}
-                            {type}
-                          </div>
-                        </label>
+                        <input
+                          type="checkbox"
+                          checked={mod.permissions[type] || false}
+                          onChange={() => togglePermission(mod.id, type)}
+                          className="w-4 h-4 accent-blue-600 cursor-pointer"
+                        />
                       </div>
                     </td>
                   ))}
@@ -134,7 +122,7 @@ const Permissions = () => {
       </div>
 
       {/* Info Card */}
-      <div className="bg-slate-900 rounded-3xl p-8 text-white relative overflow-hidden">
+      {/* <div className="bg-slate-900 rounded-3xl p-8 text-white relative overflow-hidden">
         <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="space-y-2 text-center md:text-left">
             <h4 className="text-xl font-bold">Security Tip</h4>
@@ -148,7 +136,7 @@ const Permissions = () => {
           </Button>
         </div>
         <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/10 blur-[100px] -mr-32 -mt-32"></div>
-      </div>
+      </div> */}
     </div>
   );
 };

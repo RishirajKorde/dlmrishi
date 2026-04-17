@@ -6,11 +6,27 @@ import { Input, Select, Button } from '../components/FormComponents';
 const Catalogue = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [books, setBooks] = useState([
-    { title: "Atomic Habits", author: "James Clear", isbn: "978-0735211292", cat: "Self-Help", status: "Available", color: "text-emerald-600 bg-emerald-50", stock: "12/15" },
-    { title: "The Design of Everyday Things", author: "Don Norman", isbn: "978-0465050659", cat: "Design", status: "Available", color: "text-emerald-600 bg-emerald-50", stock: "5/8" },
-    { title: "Clean Code", author: "Robert C. Martin", isbn: "978-0132350884", cat: "Technology", status: "Reserved", color: "text-amber-600 bg-amber-50", stock: "0/4" },
-    { title: "Sapiens", author: "Yuval Noah Harari", isbn: "978-0062316097", cat: "History", status: "Issued", color: "text-blue-600 bg-blue-50", stock: "2/10" },
-    { title: "JavaScript: The Good Parts", author: "Douglas Crockford", isbn: "978-0596517748", cat: "Technology", status: "Available", color: "text-emerald-600 bg-emerald-50", stock: "3/3" },
+    {
+      book_id: 1,
+      title: "Atomic Habits",
+      author: "James Clear",
+      isbn: "978-0735211292",
+      publisher: "Penguin",
+      edition: "1st",
+      category: "Self-Help",
+      subject: "Habits",
+      language: "English",
+      total_copies: 15,
+      available_copies: 12,
+      branch_id: 1,
+      status: "Available",
+      created_at: "2025-01-01",
+
+      // existing UI fields (DO NOT REMOVE)
+      cat: "Self-Help",
+      color: "text-emerald-600 bg-emerald-50",
+      stock: "12/15"
+    }
   ]);
 
   const [formData, setFormData] = useState({
@@ -18,17 +34,38 @@ const Catalogue = () => {
     author: '',
     isbn: '',
     cat: 'Self-Help',
-    stockCount: '1'
+    stockCount: '1',
+
+    publisher: '',
+    edition: '',
+    category: '',
+    subject: '',
+    language: '',
+    total_copies: '',
+    available_copies: '',
+    branch_id: ''
   });
 
   const handleAddBook = (e) => {
     e.preventDefault();
     const newBook = {
+      book_id: Date.now(),
       title: formData.title,
       author: formData.author,
       isbn: formData.isbn,
-      cat: formData.cat,
+      publisher: formData.publisher,
+      edition: formData.edition,
+      category: formData.cat,
+      subject: formData.subject,
+      language: formData.language,
+      total_copies: formData.stockCount,
+      available_copies: formData.stockCount,
+      branch_id: formData.branch_id,
       status: "Available",
+      created_at: new Date().toISOString().split('T')[0],
+
+      // UI fields (same)
+      cat: formData.cat,
       color: "text-emerald-600 bg-emerald-50",
       stock: `${formData.stockCount}/${formData.stockCount}`
     };
@@ -43,9 +80,9 @@ const Catalogue = () => {
       <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
         <div className="relative w-full md:w-96">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-          <input 
-            type="text" 
-            placeholder="Search by Title, Author, or ISBN..." 
+          <input
+            type="text"
+            placeholder="Search by Title, Author, or ISBN..."
             className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
           />
         </div>
@@ -56,7 +93,7 @@ const Catalogue = () => {
           </Button>
           <Button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2">
             <Plus size={18} />
-            <span className="text-sm">Add Book</span>
+            <span >Add</span>
           </Button>
         </div>
       </div>
@@ -102,8 +139,8 @@ const Catalogue = () => {
                     <div className="flex flex-col gap-1">
                       <div className="text-xs font-bold text-slate-700">{book.stock}</div>
                       <div className="w-20 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                        <div 
-                          className={`h-full ${parseInt(book.stock.split('/')[0]) < 2 ? 'bg-rose-500' : 'bg-blue-500'}`} 
+                        <div
+                          className={`h-full ${parseInt(book.stock.split('/')[0]) < 2 ? 'bg-rose-500' : 'bg-blue-500'}`}
                           style={{ width: `${(parseInt(book.stock.split('/')[0]) / parseInt(book.stock.split('/')[1])) * 100}%` }}
                         ></div>
                       </div>
@@ -129,47 +166,77 @@ const Catalogue = () => {
       </div>
 
       {/* Add Book Modal */}
-      <Modal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
         title="Add New Book to Catalogue"
       >
         <form onSubmit={handleAddBook} className="space-y-6">
-          <Input 
-            label="Book Title" 
+          <Input
+            label="Book Title"
             placeholder="Enter book title"
             value={formData.title}
-            onChange={e => setFormData({...formData, title: e.target.value})}
+            onChange={e => setFormData({ ...formData, title: e.target.value })}
             required
           />
-          <Input 
-            label="Author Name" 
+          <Input
+            label="Author Name"
             placeholder="Enter author's name"
             value={formData.author}
-            onChange={e => setFormData({...formData, author: e.target.value})}
+            onChange={e => setFormData({ ...formData, author: e.target.value })}
             required
           />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Input 
-              label="ISBN Number" 
+            <Input
+              label="ISBN Number"
               placeholder="978-XXXXXXXXXX"
               value={formData.isbn}
-              onChange={e => setFormData({...formData, isbn: e.target.value})}
+              onChange={e => setFormData({ ...formData, isbn: e.target.value })}
               required
             />
-            <Input 
-              label="Total Copies" 
+            <Input
+              label="Total Copies"
               type="number"
               min="1"
               value={formData.stockCount}
-              onChange={e => setFormData({...formData, stockCount: e.target.value})}
+              onChange={e => setFormData({ ...formData, stockCount: e.target.value })}
               required
             />
           </div>
-          <Select 
+
+          <Input
+            label="Publisher"
+            value={formData.publisher}
+            onChange={e => setFormData({ ...formData, publisher: e.target.value })}
+          />
+
+          <Input
+            label="Edition"
+            value={formData.edition}
+            onChange={e => setFormData({ ...formData, edition: e.target.value })}
+          />
+
+          <Input
+            label="Subject"
+            value={formData.subject}
+            onChange={e => setFormData({ ...formData, subject: e.target.value })}
+          />
+
+          <Input
+            label="Language"
+            value={formData.language}
+            onChange={e => setFormData({ ...formData, language: e.target.value })}
+          />
+
+          <Input
+            label="Branch ID"
+            value={formData.branch_id}
+            onChange={e => setFormData({ ...formData, branch_id: e.target.value })}
+          />
+          <Select
             label="Category"
             value={formData.cat}
-            onChange={e => setFormData({...formData, cat: e.target.value})}
+            onChange={e => setFormData({ ...formData, cat: e.target.value })}
             options={[
               { label: 'Self-Help', value: 'Self-Help' },
               { label: 'Technology', value: 'Technology' },

@@ -8,6 +8,8 @@ import SearchPortal from './pages/SearchPortal';
 import Reports from './pages/Reports';
 import Roles from './pages/Roles';
 import Permissions from './pages/Permissions';
+import Branch from './pages/Master/Branch';
+import Users from './pages/Master/Users';
 
 const AppRoutes = () => {
   return (
@@ -22,6 +24,9 @@ const AppRoutes = () => {
       <Route path="/reports" element={<Reports />} />
       <Route path="/roles" element={<Roles />} />
       <Route path="/permissions" element={<Permissions />} />
+      <Route path="/branch" element={<Branch />} />
+      <Route path="/users" element={<Users />} />
+
       <Route path="*" element={<div className="p-8 text-center">404 - Page Not Found</div>} />
     </Routes>
   );

@@ -1,31 +1,34 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  BookOpen, 
-  Users, 
-  ArrowLeftRight, 
-  Library, 
-  Search, 
-  BarChart3, 
-  ShieldCheck, 
-  ChevronLeft, 
+import {
+  LayoutDashboard,
+  BookOpen,
+  Users,
+  ArrowLeftRight,
+  Library,
+  Search,
+  BarChart3,
+  ShieldCheck,
+  ChevronLeft,
   ChevronRight,
   LogOut,
   Settings,
-  ChevronDown
+  ChevronDown,
+  GitBranch,
+  GitBranchIcon,
+  User2Icon,
+  Eye,
+  UserRoundKey
 } from 'lucide-react';
 
 const SidebarLink = ({ to, icon: Icon, label, active, isCollapsed, isSubItem = false }) => (
   <Link
     to={to}
-    className={`flex items-center rounded-xl transition-all duration-300 group relative ${
-      isCollapsed ? 'justify-center p-3' : 'gap-3 px-4 py-3'
-    } ${
-      active 
-        ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' 
+    className={`flex items-center rounded-xl transition-all duration-300 group relative ${isCollapsed ? 'justify-center p-3' : 'gap-3 px-4 py-3'
+      } ${active
+        ? 'bg-blue-600 text-white shadow-lg shadow-blue-200'
         : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-    } ${isSubItem && !isCollapsed ? 'ml-6' : ''}`}
+      } ${isSubItem && !isCollapsed ? 'ml-6' : ''}`}
   >
     <div className={`transition-transform duration-300 ${active ? 'scale-110' : 'group-hover:scale-110'} flex-shrink-0`}>
       <Icon size={isSubItem ? 16 : 20} />
@@ -60,8 +63,11 @@ const Sidebar = ({ isCollapsed, setCollapsed, isMobile, isOpen, onClose }) => {
   ];
 
   const masterItems = [
-    { to: '/roles', icon: ShieldCheck, label: 'Roles' },
-    { to: '/permissions', icon: Settings, label: 'Permissions' },
+    { to: '/roles', icon: UserRoundKey, label: 'Roles' },
+    { to: '/permissions', icon: Eye, label: 'Permissions' },
+    { to: '/branch', icon: GitBranchIcon, label: 'Branch' },
+    { to: '/users', icon: User2Icon, label: 'Users' },
+
   ];
 
   const sidebarClasses = `
@@ -75,7 +81,7 @@ const Sidebar = ({ isCollapsed, setCollapsed, isMobile, isOpen, onClose }) => {
     <>
       {/* Mobile Backdrop */}
       {isMobile && isOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 transition-opacity"
           onClick={onClose}
         />
@@ -115,23 +121,21 @@ const Sidebar = ({ isCollapsed, setCollapsed, isMobile, isOpen, onClose }) => {
             <div className="space-y-1.5 pt-1.5">
               <button
                 onClick={() => setIsMasterOpen(!isMasterOpen)}
-                className={`flex items-center rounded-xl transition-all duration-300 group ${
-                  isCollapsed && !isMobile ? 'justify-center p-3' : 'gap-3 px-4 py-3 w-full items-center'
-                } ${
-                  (location.pathname.includes('/roles') || location.pathname.includes('/permissions')) && !isCollapsed
+                className={`flex items-center rounded-xl transition-all duration-300 group ${isCollapsed && !isMobile ? 'justify-center p-3' : 'gap-3 px-4 py-3 w-full items-center'
+                  } ${(location.pathname.includes('/roles') || location.pathname.includes('/permissions')) && !isCollapsed
                     ? 'text-blue-600 bg-blue-50/50'
                     : 'text-slate-600 hover:bg-slate-100'
-                }`}
+                  }`}
               >
                 <div className="transition-transform duration-300 group-hover:scale-110 flex-shrink-0">
                   <Settings size={20} />
                 </div>
                 {(!isCollapsed || isMobile) && (
                   <>
-                    <span className="font-bold flex-1 text-left text-[13px]">Master Config</span>
-                    <ChevronDown 
-                      size={16} 
-                      className={`transition-transform duration-300 text-slate-400 ${isMasterOpen ? 'rotate-180' : ''}`} 
+                    <span className="font-bold flex-1 text-left text-[13px]">Master Settings</span>
+                    <ChevronDown
+                      size={16}
+                      className={`transition-transform duration-300 text-slate-400 ${isMasterOpen ? 'rotate-180' : ''}`}
                     />
                   </>
                 )}
@@ -160,21 +164,19 @@ const Sidebar = ({ isCollapsed, setCollapsed, isMobile, isOpen, onClose }) => {
 
           <div className="mt-auto pt-6 border-t border-slate-100 space-y-1">
             {!isMobile && (
-              <button 
+              <button
                 onClick={() => setCollapsed(!isCollapsed)}
-                className={`flex items-center rounded-xl transition-all duration-300 group ${
-                  isCollapsed ? 'justify-center p-3' : 'gap-3 px-4 py-3 w-full'
-                } text-slate-400 hover:text-blue-600 hover:bg-blue-50`}
+                className={`flex items-center rounded-xl transition-all duration-300 group ${isCollapsed ? 'justify-center p-3' : 'gap-3 px-4 py-3 w-full'
+                  } text-slate-400 hover:text-blue-600 hover:bg-blue-50`}
               >
                 <div className="transition-transform duration-300 group-hover:rotate-180">
                   {isCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
                 </div>
-                {!isCollapsed && <span className="font-medium text-[13px]">Minimize</span>}
+                {!isCollapsed && <span className="font-medium text-[13px]"></span>}
               </button>
             )}
-            <button className={`flex items-center rounded-xl transition-all duration-300 group ${
-              isCollapsed && !isMobile ? 'justify-center p-3' : 'gap-3 px-4 py-3 w-full'
-            } text-slate-400 hover:text-red-600 hover:bg-red-50`}>
+            <button className={`flex items-center rounded-xl transition-all duration-300 group ${isCollapsed && !isMobile ? 'justify-center p-3' : 'gap-3 px-4 py-3 w-full'
+              } text-slate-400 hover:text-red-600 hover:bg-red-50`}>
               <LogOut size={20} className="group-hover:translate-x-1 transition-transform flex-shrink-0" />
               {(!isCollapsed || isMobile) && <span className="font-medium text-[13px] text-left">Logout</span>}
             </button>

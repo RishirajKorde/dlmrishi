@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { 
-  Plus, 
-  Search, 
-  MoreVertical, 
-  Edit2, 
-  Trash2, 
-  CheckCircle2, 
+import {
+  Plus,
+  Search,
+  MoreVertical,
+  Edit2,
+  Trash2,
+  CheckCircle2,
   XCircle,
   ShieldAlert
 } from 'lucide-react';
@@ -58,7 +58,7 @@ const Roles = () => {
   };
 
   const toggleStatus = (id) => {
-    setRoles(roles.map(r => 
+    setRoles(roles.map(r =>
       r.id === id ? { ...r, status: r.status === 'Active' ? 'Deactive' : 'Active' } : r
     ));
   };
@@ -68,15 +68,15 @@ const Roles = () => {
       <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
         <div className="relative w-full md:w-96">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-          <input 
-            type="text" 
-            placeholder="Search roles..." 
+          <input
+            type="text"
+            placeholder="Search roles..."
             className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-medium"
           />
         </div>
         <Button onClick={() => handleOpenModal()} className="w-full md:w-auto">
           <Plus size={18} />
-          <span>Create New Role</span>
+          <span>Add</span>
         </Button>
       </div>
 
@@ -104,13 +104,12 @@ const Roles = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <button 
+                    <button
                       onClick={() => toggleStatus(role.id)}
-                      className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider transition-all ${
-                        role.status === 'Active' 
-                          ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100' 
-                          : 'bg-rose-50 text-rose-600 hover:bg-rose-100'
-                      }`}
+                      className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider transition-all ${role.status === 'Active'
+                        ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
+                        : 'bg-rose-50 text-rose-600 hover:bg-rose-100'
+                        }`}
                     >
                       {role.status === 'Active' ? <CheckCircle2 size={12} /> : <XCircle size={12} />}
                       {role.status}
@@ -126,14 +125,14 @@ const Roles = () => {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button 
+                      <button
                         onClick={() => handleOpenModal(role)}
                         className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
                         title="Edit"
                       >
                         <Edit2 size={16} />
                       </button>
-                      <button 
+                      <button
                         onClick={() => deleteRole(role.id)}
                         className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all"
                         title="Delete"
@@ -149,20 +148,20 @@ const Roles = () => {
         </div>
       </div>
 
-      <Modal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
         title={editingRole ? 'Update Role' : 'Create New Role'}
       >
         <form onSubmit={handleSubmit} className="space-y-6">
-          <Input 
-            label="Role Name" 
+          <Input
+            label="Role Name"
             placeholder="e.g. Senior Librarian"
             value={formData.name}
             onChange={e => setFormData({ ...formData, name: e.target.value })}
             required
           />
-          <Select 
+          <Select
             label="Initial Status"
             value={formData.status}
             onChange={e => setFormData({ ...formData, status: e.target.value })}
