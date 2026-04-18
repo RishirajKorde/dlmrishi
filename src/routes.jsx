@@ -10,7 +10,8 @@ import Roles from './pages/Roles';
 import Permissions from './pages/Permissions';
 import Branch from './pages/Master/Branch';
 import Users from './pages/Master/Users';
-
+import Categories from './pages/Master/Categories';
+import Subjects from './pages/Master/Subjects';
 const AppRoutes = () => {
   return (
     <Routes>
@@ -26,6 +27,9 @@ const AppRoutes = () => {
       <Route path="/permissions" element={<Permissions />} />
       <Route path="/branch" element={<Branch />} />
       <Route path="/users" element={<Users />} />
+      <Route path="/Categories" element={<Categories />} />
+      <Route path="/Subjects" element={<Subjects />} />
+
 
       <Route path="*" element={<div className="p-8 text-center">404 - Page Not Found</div>} />
     </Routes>

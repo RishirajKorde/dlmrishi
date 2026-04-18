@@ -63,10 +63,13 @@ const Sidebar = ({ isCollapsed, setCollapsed, isMobile, isOpen, onClose }) => {
   ];
 
   const masterItems = [
-    { to: '/roles', icon: UserRoundKey, label: 'Roles' },
-    { to: '/permissions', icon: Eye, label: 'Permissions' },
+    // { to: '/roles', icon: UserRoundKey, label: 'Roles' },
+    // { to: '/permissions', icon: Eye, label: 'Permissions' },
+        { to: '/Categories', icon: GitBranchIcon, label: 'Categories' },
+    { to: '/Subjects', icon: User2Icon, label: 'Subjects' },
+
     { to: '/branch', icon: GitBranchIcon, label: 'Branch' },
-    { to: '/users', icon: User2Icon, label: 'Users' },
+    { to: '/users', icon: User2Icon, label: 'Librarian' },
 
   ];
 

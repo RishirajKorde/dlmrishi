@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Edit2, Trash2 } from 'lucide-react';
+import { Search, Plus, Edit2, Trash2Icon } from 'lucide-react';
 import Modal from '../../components/Modal';
 import { Input, Select, Button } from '../../components/FormComponents';
 import api from '../../api/axios';
@@ -25,6 +25,7 @@ const Subjects = () => {
     const fetchCategories = async () => {
         try {
             const res = await api.get('/api/v1/admin/categories');
+
             if (res.data?.status === 200) {
                 setCategories(res.data.data || []);
             }
@@ -62,7 +63,7 @@ const Subjects = () => {
             let res;
 
             if (editingSubject) {
-                // 🔥 UPDATE (ID BASED)
+                // 🔄 UPDATE
                 res = await api.put(
                     `/api/v1/admin/categories/subjects/${editingSubject.id}`,
                     null,
@@ -101,26 +102,28 @@ const Subjects = () => {
     // ✅ EDIT CLICK
     const handleEditClick = (subject) => {
         setEditingSubject(subject);
+
         setFormData({
             name: subject.name,
             categoryId: subject.categoryId || ''
         });
+
         setIsModalOpen(true);
     };
 
-    // ✅ DELETE
     const handleDelete = async (id) => {
         if (!confirm("Are you sure you want to delete this subject?")) return;
 
         try {
             await api.delete(`/api/v1/admin/categories/subjects/${id}`);
-            fetchSubjects();
+
+            fetchSubjects(); // 🔥 refresh table
+
         } catch (error) {
             console.error("Delete error:", error.response?.data || error);
         }
     };
-
-    // ✅ RESET
+    // ✅ RESET FORM
     const resetForm = () => {
         setFormData({
             name: '',
@@ -165,7 +168,7 @@ const Subjects = () => {
 
                         <tbody className="divide-y divide-slate-50">
                             {subjects.map((s, index) => (
-                                <tr key={s.id} className="hover:bg-slate-50/50 group">
+                                <tr key={s.id} className="hover:bg-slate-50/50">
 
                                     <td className="px-6 py-4 text-[13px]">{index + 1}</td>
 
@@ -186,24 +189,17 @@ const Subjects = () => {
                                         </span>
                                     </td>
 
-                                    <td className="px-6 py-4 text-right  gap-1.5">
-
-                                        {/* EDIT */}
-                                        <button
-                                            onClick={() => handleEditClick(s)}
-                                            className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition"
-                                        >
-                                            <Edit2 size={16} />
+                                    <td className="px-6 py-4 text-right gap-1.5">
+                                        <button onClick={() => handleEditClick(s)}
+                                            className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition">
+                                            <Edit2 size={14} />
                                         </button>
-
-                                        {/* DELETE */}
-                                        <button
+                                        <button className="px-6 py-4 text-right"
                                             onClick={() => handleDelete(s.id)}
                                             className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition"
                                         >
-                                            <Trash2 size={16} />
+                                            <Trash2Icon size={16} />
                                         </button>
-
                                     </td>
 
                                 </tr>
@@ -221,6 +217,7 @@ const Subjects = () => {
             >
                 <form onSubmit={handleSubmit} className="space-y-6">
 
+                    {/* SUBJECT NAME */}
                     <Input
                         label="Subject Name"
                         value={formData.name}
@@ -228,6 +225,7 @@ const Subjects = () => {
                         required
                     />
 
+                    {/* CATEGORY */}
                     <Select
                         label="Category"
                         value={formData.categoryId}
