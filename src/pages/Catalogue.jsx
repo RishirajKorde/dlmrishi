@@ -7,7 +7,7 @@ import api from '../api/axios';
 const Catalogue = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // ✅ BOOKS (no dummy)
+  // ✅ BOOKS 
   const [books, setBooks] = useState([]);
 
   // ✅ API states
@@ -160,7 +160,7 @@ const Catalogue = () => {
           <input
             type="text"
             placeholder="Search by Title, Author, or ISBN..."
-            className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg"
+            className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-[13px]"
           />
         </div>
 
@@ -180,22 +180,22 @@ const Catalogue = () => {
       {/* Table */}
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left">
+          <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-50 text-slate-500 text-xs font-bold uppercase tracking-wider">
-                <th className="px-6 py-4">Book Details</th>
-                <th className="px-6 py-4">ISBN</th>
-                <th className="px-6 py-4">Category</th>
-                <th className="px-6 py-4">Status</th>
-                <th className="px-6 py-4">Copies</th>
-                <th className="px-6 py-4"></th>
+              <tr className="bg-slate-50/50 border-b border-slate-100">
+                <th className="px-6 py-4 text-[9px] uppercase font-bold">Book Details</th>
+                <th className="px-6 py-4 text-[9px] uppercase font-bold">ISBN</th>
+                <th className="px-6 py-4 text-[9px] uppercase font-bold">Category</th>
+                <th className="px-6 py-4 text-[9px] uppercase font-bold">Status</th>
+                <th className="px-6 py-4 text-[9px] uppercase font-bold">Copies</th>
+                <th className="px-6 py-4 text-[9px] uppercase font-bold">Action</th>
               </tr>
             </thead>
 
             <tbody className="divide-y divide-slate-50">
               {books.map((book, idx) => (
                 <tr key={idx} className="hover:bg-slate-50">
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 text-[9px] uppercase font-bold">
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-16 bg-slate-100 rounded flex items-center justify-center">
                         <BookIcon size={24} />
@@ -207,23 +207,23 @@ const Catalogue = () => {
                     </div>
                   </td>
 
-                  <td className="px-6 py-4 text-sm font-mono text-slate-600">{book.isbn}</td>
+                  <td className="px-6 py-4 text-[9px] uppercase font-bold text-sm font-mono text-slate-600">{book.isbn}</td>
 
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 text-[9px] uppercase font-bold">
                     <span className="text-sm bg-slate-100 px-2 py-1 rounded">{book.cat}</span>
                   </td>
 
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 text-[9px] uppercase font-bold">
                     <span className={`px-3 py-1 rounded-full text-[10px] font-bold ${book.color}`}>
                       {book.status}
                     </span>
                   </td>
 
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 text-[9px] uppercase font-bold">
                     <div className="text-xs font-bold">{book.stock}</div>
                   </td>
 
-                  <td className="px-6 py-4 text-right">
+                  <td className="px-6 py-4 text-[9px] uppercase font-bold text-right">
                     <MoreVertical />
                   </td>
                 </tr>
