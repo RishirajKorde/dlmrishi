@@ -39,26 +39,60 @@ const Catalogue = () => {
 
   // ================= API =================
 
+  // const fetchBooks = async () => {
+  //   try {
+  //     const res = await api.get('/api/v1/admin/books');
+
+  //     console.log("Books API:", res.data);
+
+  //     const formatted = res.data.data.map((b) => ({
+  //       book_id: b.bookId,
+  //       title: b.title,
+  //       author: b.author,
+  //       isbn: b.isbn,
+  //       category: b.categoryName,
+  //       total_copies: b.totalCopies,
+  //       available_copies: b.availableCopies,
+  //       branch_id: b.branchId,
+  //       status: b.availableCopies > 0 ? "Available" : "Out of Stock",
+  //       created_at: b.createdAt,
+
+  //       // UI fields (same as your UI)
+  //       cat: b.categoryName,
+  //       color:
+  //         b.availableCopies > 0
+  //           ? "text-emerald-600 bg-emerald-50"
+  //           : "text-rose-600 bg-rose-50",
+  //       stock: `${b.availableCopies}/${b.totalCopies}`,
+  //     }));
+
+  //     setBooks(formatted);
+
+  //   } catch (err) {
+  //     console.error("Books fetch error", err);
+  //   }
+  // };
+
+
   const fetchBooks = async () => {
     try {
       const res = await api.get('/api/v1/admin/books');
 
-      console.log("Books API:", res.data);
+      console.log("Books FULL response:", res.data);
 
-      const formatted = res.data.data.map((b) => ({
+      const booksData = res.data.data.content || [];
+
+
+      const formatted = booksData.map((b) => ({
         book_id: b.bookId,
         title: b.title,
         author: b.author,
         isbn: b.isbn,
-        category: b.categoryName,
+        cat: b.categoryName,
         total_copies: b.totalCopies,
         available_copies: b.availableCopies,
         branch_id: b.branchId,
         status: b.availableCopies > 0 ? "Available" : "Out of Stock",
-        created_at: b.createdAt,
-
-        // UI fields (same as your UI)
-        cat: b.categoryName,
         color:
           b.availableCopies > 0
             ? "text-emerald-600 bg-emerald-50"
@@ -93,9 +127,10 @@ const Catalogue = () => {
 
   const fetchSubjects = async (categoryId) => {
     try {
-      const res = await api.post('/api/v1/admin/categories/by-category', {
-        categoryId
-      });
+      const res = await api.get(
+        `/api/v1/admin/categories/by-category?categoryId=${categoryId}`
+      );
+      console.log("fetchsubjectRK", res)
       setSubjects(res.data.data);
     } catch (err) {
       console.error("Subject error", err);
@@ -248,23 +283,43 @@ const Catalogue = () => {
 
           <Input label="Total Copies" type="number" value={formData.stockCount}
             onChange={e => setFormData({ ...formData, stockCount: e.target.value })} />
+          <Select
+            label="Branch"
+            value={formData.branch_id}
+            onChange={(e) =>
+              setFormData({ ...formData, branch_id: e.target.value })
+            }
+            options={[
+              { label: "Select Branch", value: "" }, // ✅ placeholder
+              ...branches.map(b => ({
+                label: b.branchName,
+                value: b.branchId
+              }))
+            ]}
+          />
 
           {/* Category */}
           <Select
             label="Category"
             value={formData.categoryId}
             onChange={(e) => {
+              const selectedId = e.target.value;
+
               setFormData({
                 ...formData,
-                categoryId: e.target.value,
-                cat: categories.find(c => c.id == e.target.value)?.name
+                categoryId: selectedId,
+                subjectId: '' // reset subject
               });
-              fetchSubjects(e.target.value);
+
+              fetchSubjects(selectedId);
             }}
-            options={categories.map(c => ({
-              label: c.name,
-              value: c.id
-            }))}
+            options={[
+              { label: "Select Category", value: "" }, // ✅ placeholder
+              ...categories.map(c => ({
+                label: c.name,
+                value: c.id
+              }))
+            ]}
           />
 
           {/* Subject */}
@@ -274,24 +329,16 @@ const Catalogue = () => {
             onChange={(e) =>
               setFormData({ ...formData, subjectId: e.target.value })
             }
-            options={subjects.map(s => ({
-              label: s.name,
-              value: s.id
-            }))}
+            options={[
+              { label: "Select Subject", value: "" }, // ✅ placeholder
+              ...subjects.map(s => ({
+                label: s.subjectName,
+                value: s.subjectId
+              }))
+            ]}
+            disabled={!formData.categoryId} // ✅ important
           />
 
-          {/* Branch */}
-          <Select
-            label="Branch"
-            value={formData.branch_id}
-            onChange={(e) =>
-              setFormData({ ...formData, branch_id: e.target.value })
-            }
-            options={branches.map(b => ({
-              label: b.branchName,
-              value: b.branchId
-            }))}
-          />
 
           <div className="flex gap-3">
             <Button variant="secondary" className="flex-1" type="button" onClick={() => setIsModalOpen(false)}>
