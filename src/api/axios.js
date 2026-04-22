@@ -6,5 +6,5 @@ const api = axios.create({
         'Content-Type': 'application/json'
     }
 });
-console.log("AXIOS BASE URL:", import.meta.env.VITE_APP_BASE_URL); // debug
+// console.log("AXIOS BASE URL:", import.meta.env.VITE_APP_BASE_URL); // debug
 export default api;   // ✅ matches variable name

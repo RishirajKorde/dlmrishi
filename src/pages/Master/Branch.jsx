@@ -1,144 +1,102 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Edit2, Trash2 } from 'lucide-react';
+import { Search, Plus, Eye, Edit2, Trash2 } from 'lucide-react';
 import Modal from '../../components/Modal';
 import { Input, Select, Button } from '../../components/FormComponents';
 import api from '../../api/axios';
 
-const Subjects = () => {
+const Branch = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [subjects, setSubjects] = useState([]);
-    const [categories, setCategories] = useState([]);
-    const [editingSubject, setEditingSubject] = useState(null);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [viewingBranch, setViewingBranch] = useState(null);
+    const [editingBranch, setEditingBranch] = useState(null);
+    const [branchToDelete, setBranchToDelete] = useState(null);
+
+    const [branches, setBranches] = useState([]);
 
     const [formData, setFormData] = useState({
         name: '',
-        categoryId: ''
+        address: '',
+        city: '',
+        pincode: '',
+        contact_number: '',
+        status: 'Active'
     });
 
-    // ✅ INITIAL LOAD
+    // ✅ FETCH API
     useEffect(() => {
-        fetchCategories();
-        fetchSubjects();
+        fetchBranches();
     }, []);
 
-    // ✅ FETCH CATEGORIES
-    const fetchCategories = async () => {
+    const fetchBranches = async () => {
         try {
-            const res = await api.get('/api/v1/admin/categories');
-            if (res.data?.status === 200) {
-                setCategories(res.data.data || []);
-            }
-        } catch (error) {
-            console.error('Error fetching categories:', error);
-        }
-    };
-
-    // ✅ FETCH SUBJECTS
-    const fetchSubjects = async () => {
-        try {
-            const res = await api.get('/api/v1/admin/categories/subjects');
+            const res = await api.get('/api/v1/admin/branches');
 
             if (res.data?.status === 200) {
-                const formatted = (res.data.data || []).map((s) => ({
-                    id: s.id,
-                    name: s.name,
-                    categoryId: s.categoryId || s.category?.id,
-                    categoryName: s.categoryName || s.category?.name || 'N/A',
-                    status: s.isActive ? 'Active' : 'Inactive'
+                const formattedData = res.data.data.map((b) => ({
+                    id: b.branchId,
+                    name: b.branchName,
+                    address: b.address,
+                    city: b.address?.split(',')[1]?.trim() || '',
+                    pincode: '',
+                    contact_number: '',
+                    status: b.active ? 'Active' : 'Inactive'
                 }));
 
-                setSubjects(formatted);
+                setBranches(formattedData);
             }
         } catch (error) {
-            console.error('Error fetching subjects:', error);
+            console.error('Error fetching branches:', error);
         }
     };
 
-    // ✅ ADD / UPDATE SUBJECT
-    const handleSubmit = async (e) => {
+    const handleSubmit = (e) => {
         e.preventDefault();
 
-        try {
-            let res;
-
-            if (editingSubject) {
-                // 🔥 UPDATE (ID BASED)
-                res = await api.put(
-                    `/api/v1/admin/categories/subjects/${editingSubject.id}`,
-                    null,
-                    {
-                        params: {
-                            name: formData.name,
-                            categoryId: Number(formData.categoryId)
-                        }
-                    }
-                );
-            } else {
-                // ➕ CREATE
-                res = await api.post(
-                    '/api/v1/admin/categories/subjects',
-                    null,
-                    {
-                        params: {
-                            name: formData.name,
-                            categoryId: Number(formData.categoryId)
-                        }
-                    }
-                );
-            }
-
-            if (res.data?.status === 200 || res.status === 200) {
-                fetchSubjects();
-                resetForm();
-                setIsModalOpen(false);
-            }
-
-        } catch (error) {
-            console.error("Error saving subject:", error.response?.data || error);
+        if (editingBranch) {
+            setBranches(branches.map(b =>
+                b.id === editingBranch.id ? { ...b, ...formData } : b
+            ));
+            setEditingBranch(null);
+        } else {
+            setBranches([{ ...formData, id: Date.now() }, ...branches]);
         }
+
+        resetForm();
+        setIsModalOpen(false);
     };
 
-    // ✅ EDIT CLICK
-    const handleEditClick = (subject) => {
-        setEditingSubject(subject);
-        setFormData({
-            name: subject.name,
-            categoryId: subject.categoryId || ''
-        });
-        setIsModalOpen(true);
-    };
-
-    // ✅ DELETE
-    const handleDelete = async (id) => {
-        if (!confirm("Are you sure you want to delete this subject?")) return;
-
-        try {
-            await api.delete(`/api/v1/admin/categories/subjects/${id}`);
-            fetchSubjects();
-        } catch (error) {
-            console.error("Delete error:", error.response?.data || error);
-        }
-    };
-
-    // ✅ RESET
     const resetForm = () => {
         setFormData({
             name: '',
-            categoryId: ''
+            address: '',
+            city: '',
+            pincode: '',
+            contact_number: '',
+            status: 'Active'
         });
-        setEditingSubject(null);
+    };
+
+    const handleEditClick = (b) => {
+        setEditingBranch(b);
+        setFormData(b);
+        setIsModalOpen(true);
+    };
+
+    const handleDeleteConfirm = () => {
+        setBranches(branches.filter(b => b.id !== branchToDelete.id));
+        setIsDeleteModalOpen(false);
     };
 
     return (
         <div className="space-y-6">
 
-            {/* HEADER */}
+            {/* Header */}
             <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
                 <div className="relative w-full md:w-96">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                     <input
                         type="text"
-                        placeholder="Search Subject..."
+                        placeholder="Search Branch..."
                         className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-[13px]"
                     />
                 </div>
@@ -156,54 +114,65 @@ const Subjects = () => {
                         <thead>
                             <tr className="bg-slate-50/50 border-b border-slate-100">
                                 <th className="px-6 py-4 text-[9px] uppercase font-bold">Sr No</th>
-                                <th className="px-6 py-4 text-[9px] uppercase font-bold">Subject</th>
-                                <th className="px-6 py-4 text-[9px] uppercase font-bold">Category</th>
+                                <th className="px-6 py-4 text-[9px] uppercase font-bold">Branch Info</th>
+                                <th className="px-6 py-4 text-[9px] uppercase font-bold">City</th>
+                                <th className="px-6 py-4 text-[9px] uppercase font-bold">Contact</th>
+                                <th className="px-6 py-4 text-[9px] uppercase font-bold">Pincode</th>
                                 <th className="px-6 py-4 text-[9px] uppercase font-bold">Status</th>
                                 <th className="px-6 py-4 text-[9px] uppercase font-bold text-right">Actions</th>
                             </tr>
                         </thead>
 
                         <tbody className="divide-y divide-slate-50">
-                            {subjects.map((s, index) => (
-                                <tr key={s.id} className="hover:bg-slate-50/50 group">
+                            {branches.map((b, index) => (
+                                <tr key={b.id} className="hover:bg-slate-50/50 group">
 
                                     <td className="px-6 py-4 text-[13px]">{index + 1}</td>
 
-                                    <td className="px-6 py-4 text-[13px] font-bold">
-                                        {s.name}
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-9 h-9 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600 font-bold text-[11px] border">
+                                                {b.name?.[0]}
+                                            </div>
+                                            <div>
+                                                <p className="font-bold text-slate-900 text-[13px]">{b.name}</p>
+                                                <p className="text-[9px] text-blue-600 font-mono">{b.address}</p>
+                                            </div>
+                                        </div>
                                     </td>
 
-                                    <td className="px-6 py-4 text-[13px]">
-                                        {s.categoryName}
-                                    </td>
+                                    <td className="px-6 py-4 text-[13px]">{b.city}</td>
+                                    <td className="px-6 py-4 text-[13px]">{b.contact_number}</td>
+                                    <td className="px-6 py-4 text-[13px]">{b.pincode}</td>
 
                                     <td className="px-6 py-4">
-                                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold border ${s.status === 'Active'
-                                            ? 'text-emerald-600 bg-emerald-50'
-                                            : 'text-amber-600 bg-amber-50'
+                                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold border ${b.status === 'Active'
+                                                ? 'text-emerald-600 bg-emerald-50'
+                                                : 'text-amber-600 bg-amber-50'
                                             }`}>
-                                            {s.status}
+                                            {b.status}
                                         </span>
                                     </td>
 
-                                    <td className="px-6 py-4 text-right  gap-1.5">
+                                    <td className="px-6 py-4 text-right">
+                                        <div className="flex justify-end gap-1.5 opacity-0 group-hover:opacity-100">
 
-                                        {/* EDIT */}
-                                        <button
-                                            onClick={() => handleEditClick(s)}
-                                            className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition"
-                                        >
-                                            <Edit2 size={16} />
-                                        </button>
+                                            <button onClick={() => setViewingBranch(b)}>
+                                                <Eye size={14} />
+                                            </button>
 
-                                        {/* DELETE */}
-                                        <button
-                                            onClick={() => handleDelete(s.id)}
-                                            className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition"
-                                        >
-                                            <Trash2 size={16} />
-                                        </button>
+                                            <button onClick={() => handleEditClick(b)}>
+                                                <Edit2 size={14} />
+                                            </button>
 
+                                            <button onClick={() => {
+                                                setBranchToDelete(b);
+                                                setIsDeleteModalOpen(true);
+                                            }}>
+                                                <Trash2 size={14} />
+                                            </button>
+
+                                        </div>
                                     </td>
 
                                 </tr>
@@ -213,42 +182,38 @@ const Subjects = () => {
                 </div>
             </div>
 
-            {/* MODAL */}
-            <Modal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                title={editingSubject ? "Edit Subject" : "Add Subject"}
-            >
+            {/* FORM MODAL */}
+            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Branch Form">
                 <form onSubmit={handleSubmit} className="space-y-6">
 
-                    <Input
-                        label="Subject Name"
-                        value={formData.name}
-                        onChange={e => setFormData({ ...formData, name: e.target.value })}
-                        required
-                    />
+                    <Input label="Branch Name" value={formData.name}
+                        onChange={e => setFormData({ ...formData, name: e.target.value })} required />
 
-                    <Select
-                        label="Category"
-                        value={formData.categoryId}
-                        onChange={e => setFormData({ ...formData, categoryId: e.target.value })}
+                    <Input label="Address" value={formData.address}
+                        onChange={e => setFormData({ ...formData, address: e.target.value })} />
+
+                    <Input label="City" value={formData.city}
+                        onChange={e => setFormData({ ...formData, city: e.target.value })} />
+
+                    <Input label="Pincode" value={formData.pincode}
+                        onChange={e => setFormData({ ...formData, pincode: e.target.value })} />
+
+                    <Input label="Contact Number" value={formData.contact_number}
+                        onChange={e => setFormData({ ...formData, contact_number: e.target.value })} />
+
+                    <Select label="Status" value={formData.status}
+                        onChange={e => setFormData({ ...formData, status: e.target.value })}
                         options={[
-                            { label: 'Select Category', value: '' },
-                            ...categories.map(c => ({
-                                label: c.name,
-                                value: c.id
-                            }))
+                            { label: 'Active', value: 'Active' },
+                            { label: 'Inactive', value: 'Inactive' }
                         ]}
-                        required
                     />
 
                     <div className="flex gap-3">
                         <Button variant="secondary" className="flex-1" onClick={() => setIsModalOpen(false)}>
                             Cancel
                         </Button>
-                        <Button className="flex-1" type="submit">
-                            {editingSubject ? "Update" : "Save"}
-                        </Button>
+                        <Button className="flex-1" type="submit">Save</Button>
                     </div>
 
                 </form>
@@ -258,4 +223,4 @@ const Subjects = () => {
     );
 };
 
-export default Subjects;
+export default Branch;

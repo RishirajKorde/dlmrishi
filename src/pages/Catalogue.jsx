@@ -1,104 +1,183 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Plus, Filter, MoreVertical, Book as BookIcon } from 'lucide-react';
 import Modal from '../components/Modal';
 import { Input, Select, Button } from '../components/FormComponents';
+import api from '../api/axios';
 
 const Catalogue = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [books, setBooks] = useState([
-    {
-      book_id: 1,
-      title: "Atomic Habits",
-      author: "James Clear",
-      isbn: "978-0735211292",
-      publisher: "Penguin",
-      edition: "1st",
-      category: "Self-Help",
-      subject: "Habits",
-      language: "English",
-      total_copies: 15,
-      available_copies: 12,
-      branch_id: 1,
-      status: "Available",
-      created_at: "2025-01-01",
 
-      // existing UI fields (DO NOT REMOVE)
-      cat: "Self-Help",
-      color: "text-emerald-600 bg-emerald-50",
-      stock: "12/15"
-    }
-  ]);
+  // ✅ BOOKS (no dummy)
+  const [books, setBooks] = useState([]);
+
+  // ✅ API states
+  const [categories, setCategories] = useState([]);
+  const [subjects, setSubjects] = useState([]);
+  const [branches, setBranches] = useState([]);
 
   const [formData, setFormData] = useState({
     title: '',
     author: '',
     isbn: '',
-    cat: 'Self-Help',
+    cat: '',
+    categoryId: '',
+    subjectId: '',
     stockCount: '1',
-
     publisher: '',
     edition: '',
-    category: '',
     subject: '',
     language: '',
-    total_copies: '',
-    available_copies: '',
     branch_id: ''
   });
 
-  const handleAddBook = (e) => {
+  // ✅ Initial Load
+  useEffect(() => {
+    fetchCategories();
+    fetchBranches();
+    fetchBooks(); // 🔥 important
+  }, []);
+
+  // ================= API =================
+
+  const fetchBooks = async () => {
+    try {
+      const res = await api.get('/api/v1/admin/books');
+
+      console.log("Books API:", res.data);
+
+      const formatted = res.data.data.map((b) => ({
+        book_id: b.bookId,
+        title: b.title,
+        author: b.author,
+        isbn: b.isbn,
+        category: b.categoryName,
+        total_copies: b.totalCopies,
+        available_copies: b.availableCopies,
+        branch_id: b.branchId,
+        status: b.availableCopies > 0 ? "Available" : "Out of Stock",
+        created_at: b.createdAt,
+
+        // UI fields (same as your UI)
+        cat: b.categoryName,
+        color:
+          b.availableCopies > 0
+            ? "text-emerald-600 bg-emerald-50"
+            : "text-rose-600 bg-rose-50",
+        stock: `${b.availableCopies}/${b.totalCopies}`,
+      }));
+
+      setBooks(formatted);
+
+    } catch (err) {
+      console.error("Books fetch error", err);
+    }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const res = await api.get('/api/v1/admin/categories');
+      setCategories(res.data.data);
+    } catch (err) {
+      console.error("Category error", err);
+    }
+  };
+
+  const fetchBranches = async () => {
+    try {
+      const res = await api.get('/api/v1/admin/branches');
+      setBranches(res.data.data);
+    } catch (err) {
+      console.error("Branch error", err);
+    }
+  };
+
+  const fetchSubjects = async (categoryId) => {
+    try {
+      const res = await api.post('/api/v1/admin/categories/by-category', {
+        categoryId
+      });
+      setSubjects(res.data.data);
+    } catch (err) {
+      console.error("Subject error", err);
+    }
+  };
+
+  // ================= ADD BOOK =================
+
+  const handleAddBook = async (e) => {
     e.preventDefault();
-    const newBook = {
-      book_id: Date.now(),
+
+    const payload = {
+      isbn: formData.isbn,
       title: formData.title,
       author: formData.author,
-      isbn: formData.isbn,
       publisher: formData.publisher,
       edition: formData.edition,
-      category: formData.cat,
-      subject: formData.subject,
-      language: formData.language,
-      total_copies: formData.stockCount,
-      available_copies: formData.stockCount,
-      branch_id: formData.branch_id,
-      status: "Available",
-      created_at: new Date().toISOString().split('T')[0],
-
-      // UI fields (same)
-      cat: formData.cat,
-      color: "text-emerald-600 bg-emerald-50",
-      stock: `${formData.stockCount}/${formData.stockCount}`
+      categoryId: Number(formData.categoryId),
+      subjectId: Number(formData.subjectId),
+      branchId: Number(formData.branch_id),
+      totalCopies: Number(formData.stockCount),
     };
-    setBooks([newBook, ...books]);
-    setFormData({ title: '', author: '', isbn: '', cat: 'Self-Help', stockCount: '1' });
-    setIsModalOpen(false);
+
+    try {
+      await api.post('/api/v1/admin/books', payload);
+
+      // 🔥 refresh from backend
+      fetchBooks();
+
+      setIsModalOpen(false);
+
+      // reset form
+      setFormData({
+        title: '',
+        author: '',
+        isbn: '',
+        cat: '',
+        categoryId: '',
+        subjectId: '',
+        stockCount: '1',
+        publisher: '',
+        edition: '',
+        subject: '',
+        language: '',
+        branch_id: ''
+      });
+
+    } catch (err) {
+      console.error("Book add error", err.response?.data || err);
+    }
   };
+
+  // ================= UI =================
 
   return (
     <div className="space-y-6">
-      {/* Search and Filter Header */}
+
+      {/* Header */}
       <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
         <div className="relative w-full md:w-96">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
           <input
             type="text"
             placeholder="Search by Title, Author, or ISBN..."
-            className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+            className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg"
           />
         </div>
+
         <div className="flex gap-3 w-full md:w-auto">
           <Button variant="outline" className="flex items-center gap-2">
             <Filter size={18} />
             <span className="text-sm">Filters</span>
           </Button>
+
           <Button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2">
             <Plus size={18} />
-            <span >Add</span>
+            <span>Add</span>
           </Button>
         </div>
       </div>
 
-      {/* Book Grid/Table */}
+      {/* Table */}
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
@@ -112,147 +191,115 @@ const Catalogue = () => {
                 <th className="px-6 py-4"></th>
               </tr>
             </thead>
+
             <tbody className="divide-y divide-slate-50">
               {books.map((book, idx) => (
-                <tr key={idx} className="hover:bg-slate-50 transition-colors group">
+                <tr key={idx} className="hover:bg-slate-50">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-16 bg-slate-100 rounded flex items-center justify-center text-slate-400 group-hover:text-blue-500 transition-colors">
+                      <div className="w-12 h-16 bg-slate-100 rounded flex items-center justify-center">
                         <BookIcon size={24} />
                       </div>
                       <div>
-                        <p className="font-bold text-slate-900 group-hover:text-blue-600">{book.title}</p>
+                        <p className="font-bold text-slate-900">{book.title}</p>
                         <p className="text-xs text-slate-500">by {book.author}</p>
                       </div>
                     </div>
                   </td>
+
                   <td className="px-6 py-4 text-sm font-mono text-slate-600">{book.isbn}</td>
+
                   <td className="px-6 py-4">
-                    <span className="text-sm text-slate-600 bg-slate-100 px-2 py-1 rounded">{book.cat}</span>
+                    <span className="text-sm bg-slate-100 px-2 py-1 rounded">{book.cat}</span>
                   </td>
+
                   <td className="px-6 py-4">
-                    <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide ${book.color}`}>
+                    <span className={`px-3 py-1 rounded-full text-[10px] font-bold ${book.color}`}>
                       {book.status}
                     </span>
                   </td>
+
                   <td className="px-6 py-4">
-                    <div className="flex flex-col gap-1">
-                      <div className="text-xs font-bold text-slate-700">{book.stock}</div>
-                      <div className="w-20 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                        <div
-                          className={`h-full ${parseInt(book.stock.split('/')[0]) < 2 ? 'bg-rose-500' : 'bg-blue-500'}`}
-                          style={{ width: `${(parseInt(book.stock.split('/')[0]) / parseInt(book.stock.split('/')[1])) * 100}%` }}
-                        ></div>
-                      </div>
-                    </div>
+                    <div className="text-xs font-bold">{book.stock}</div>
                   </td>
+
                   <td className="px-6 py-4 text-right">
-                    <button className="p-2 text-slate-400 hover:text-slate-900 rounded-lg hover:bg-slate-100">
-                      <MoreVertical size={18} />
-                    </button>
+                    <MoreVertical />
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-        <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-between items-center text-sm">
-          <p className="text-slate-500">Showing {books.length} of 45,210 books</p>
-          <div className="flex gap-2">
-            <button className="px-3 py-1 border border-slate-200 rounded text-slate-400 cursor-not-allowed">Previous</button>
-            <button className="px-3 py-1 bg-white border border-slate-200 rounded text-slate-600 hover:bg-slate-50">Next</button>
-          </div>
-        </div>
       </div>
 
-      {/* Add Book Modal */}
-      <Modal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title="Add New Book to Catalogue"
-      >
+      {/* Modal */}
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Add New Book to Catalogue">
         <form onSubmit={handleAddBook} className="space-y-6">
-          <Input
-            label="Book Title"
-            placeholder="Enter book title"
-            value={formData.title}
-            onChange={e => setFormData({ ...formData, title: e.target.value })}
-            required
-          />
-          <Input
-            label="Author Name"
-            placeholder="Enter author's name"
-            value={formData.author}
-            onChange={e => setFormData({ ...formData, author: e.target.value })}
-            required
-          />
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Input
-              label="ISBN Number"
-              placeholder="978-XXXXXXXXXX"
-              value={formData.isbn}
-              onChange={e => setFormData({ ...formData, isbn: e.target.value })}
-              required
-            />
-            <Input
-              label="Total Copies"
-              type="number"
-              min="1"
-              value={formData.stockCount}
-              onChange={e => setFormData({ ...formData, stockCount: e.target.value })}
-              required
-            />
-          </div>
 
-          <Input
-            label="Publisher"
-            value={formData.publisher}
-            onChange={e => setFormData({ ...formData, publisher: e.target.value })}
-          />
+          <Input label="Book Title" value={formData.title}
+            onChange={e => setFormData({ ...formData, title: e.target.value })} />
 
-          <Input
-            label="Edition"
-            value={formData.edition}
-            onChange={e => setFormData({ ...formData, edition: e.target.value })}
-          />
+          <Input label="Author Name" value={formData.author}
+            onChange={e => setFormData({ ...formData, author: e.target.value })} />
 
-          <Input
-            label="Subject"
-            value={formData.subject}
-            onChange={e => setFormData({ ...formData, subject: e.target.value })}
-          />
+          <Input label="ISBN Number" value={formData.isbn}
+            onChange={e => setFormData({ ...formData, isbn: e.target.value })} />
 
-          <Input
-            label="Language"
-            value={formData.language}
-            onChange={e => setFormData({ ...formData, language: e.target.value })}
-          />
+          <Input label="Total Copies" type="number" value={formData.stockCount}
+            onChange={e => setFormData({ ...formData, stockCount: e.target.value })} />
 
-          <Input
-            label="Branch ID"
-            value={formData.branch_id}
-            onChange={e => setFormData({ ...formData, branch_id: e.target.value })}
-          />
+          {/* Category */}
           <Select
             label="Category"
-            value={formData.cat}
-            onChange={e => setFormData({ ...formData, cat: e.target.value })}
-            options={[
-              { label: 'Self-Help', value: 'Self-Help' },
-              { label: 'Technology', value: 'Technology' },
-              { label: 'Design', value: 'Design' },
-              { label: 'History', value: 'History' },
-              { label: 'Medicine', value: 'Medicine' }
-            ]}
+            value={formData.categoryId}
+            onChange={(e) => {
+              setFormData({
+                ...formData,
+                categoryId: e.target.value,
+                cat: categories.find(c => c.id == e.target.value)?.name
+              });
+              fetchSubjects(e.target.value);
+            }}
+            options={categories.map(c => ({
+              label: c.name,
+              value: c.id
+            }))}
           />
-          <div className="pt-4 flex gap-3">
-            <Button variant="secondary" className="flex-1" onClick={() => setIsModalOpen(false)} type="button">
+
+          {/* Subject */}
+          <Select
+            label="Subject"
+            value={formData.subjectId}
+            onChange={(e) =>
+              setFormData({ ...formData, subjectId: e.target.value })
+            }
+            options={subjects.map(s => ({
+              label: s.name,
+              value: s.id
+            }))}
+          />
+
+          {/* Branch */}
+          <Select
+            label="Branch"
+            value={formData.branch_id}
+            onChange={(e) =>
+              setFormData({ ...formData, branch_id: e.target.value })
+            }
+            options={branches.map(b => ({
+              label: b.branchName,
+              value: b.branchId
+            }))}
+          />
+
+          <div className="flex gap-3">
+            <Button variant="secondary" className="flex-1" type="button" onClick={() => setIsModalOpen(false)}>
               Cancel
             </Button>
-            <Button className="flex-1" type="submit">
-              Add Book
-            </Button>
+            <Button className="flex-1" type="submit">Save</Button>
           </div>
+
         </form>
       </Modal>
     </div>

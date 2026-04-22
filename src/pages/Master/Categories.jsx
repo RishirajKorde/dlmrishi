@@ -26,7 +26,7 @@ const Categories = () => {
     const fetchCategories = async () => {
         try {
             const res = await api.get('/api/v1/admin/categories');
-
+            // console.log("kordec",res);
             if (res.data?.status === 200) {
                 const formattedData = res.data.data.map((c) => ({
                     id: c.id,
