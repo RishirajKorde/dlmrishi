@@ -56,7 +56,7 @@ const Sidebar = ({ isCollapsed, setCollapsed, isMobile, isOpen, onClose }) => {
     { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { to: '/catalogue', icon: BookOpen, label: 'Books' },
     { to: '/members', icon: Users, label: 'Members' },
-    // { to: '/transactions', icon: ArrowLeftRight, label: 'Transactions' },
+    { to: '/transactions', icon: ArrowLeftRight, label: 'Transactions' },
     // { to: '/library', icon: Library, label: 'Digital Library' },
     // { to: '/search', icon: Search, label: 'Public Portal' },
     // { to: '/reports', icon: BarChart3, label: 'Reports' },

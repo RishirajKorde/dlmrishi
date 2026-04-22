@@ -198,7 +198,7 @@ const Subjects = () => {
                                             onClick={() => handleDelete(s.id)}
                                             className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition"
                                         >
-                                            <Trash2Icon size={16} />
+                                            <Trash2Icon size={14} />
                                         </button>
                                     </td>
 

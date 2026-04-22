@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Eye, Edit2, Trash2 } from 'lucide-react';
+import { Search, Plus, Eye, Edit2, Trash2Icon } from 'lucide-react';
 import Modal from '../../components/Modal';
 import { Input, Select, Button } from '../../components/FormComponents';
 import api from '../../api/axios';
@@ -147,32 +147,33 @@ const Branch = () => {
 
                                     <td className="px-6 py-4">
                                         <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold border ${b.status === 'Active'
-                                                ? 'text-emerald-600 bg-emerald-50'
-                                                : 'text-amber-600 bg-amber-50'
+                                            ? 'text-emerald-600 bg-emerald-50'
+                                            : 'text-amber-600 bg-amber-50'
                                             }`}>
                                             {b.status}
                                         </span>
                                     </td>
 
-                                    <td className="px-6 py-4 text-right">
-                                        <div className="flex justify-end gap-1.5 opacity-0 group-hover:opacity-100">
+                                    <td className="px-6 py-4 gap-1.5 text-right">
 
-                                            <button onClick={() => setViewingBranch(b)}>
-                                                <Eye size={14} />
-                                            </button>
+                                        <button className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition" onClick={() => setViewingBranch(b)}>
+                                            <Eye size={14} />
+                                        </button>
 
-                                            <button onClick={() => handleEditClick(b)}>
-                                                <Edit2 size={14} />
-                                            </button>
+                                        <button
+                                            className="px-6 py-4 text-right" onClick={() => handleEditClick(b)}>
+                                            <Edit2 size={14} />
+                                        </button>
 
-                                            <button onClick={() => {
-                                                setBranchToDelete(b);
-                                                setIsDeleteModalOpen(true);
-                                            }}>
-                                                <Trash2 size={14} />
-                                            </button>
+                                        <button className="px-6 py-4 text-right" onClick={() => {
+                                            setBranchToDelete(b);
+                                            setIsDeleteModalOpen(true);
+                                        }}
+                                            className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition">
+                                            <Trash2Icon size={14} />
+                                        </button>
 
-                                        </div>
+
                                     </td>
 
                                 </tr>

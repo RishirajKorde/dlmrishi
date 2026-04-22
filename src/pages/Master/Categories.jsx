@@ -151,7 +151,7 @@ const Categories = () => {
                                             onClick={() => handleEditClick(c)}
                                             className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition"
                                         >
-                                            <Edit2 size={16} />
+                                            <Edit2 size={14} />
                                         </button>
 
                                         {/* DELETE */}
@@ -159,7 +159,7 @@ const Categories = () => {
                                             onClick={() => handleDelete(c.id)}
                                             className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition"
                                         >
-                                            <Trash2 size={16} />
+                                            <Trash2 size={14} />
                                         </button>
 
                                     </td>
