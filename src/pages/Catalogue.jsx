@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Filter, MoreVertical, Book as BookIcon } from 'lucide-react';
+import { Search, Plus, Filter, MoreVertical, Book as BookIcon, Edit2, Trash2Icon, Eye } from 'lucide-react';
 import Modal from '../components/Modal';
 import { Input, Select, Button } from '../components/FormComponents';
 import api from '../api/axios';
@@ -14,7 +14,9 @@ const Catalogue = () => {
   const [categories, setCategories] = useState([]);
   const [subjects, setSubjects] = useState([]);
   const [branches, setBranches] = useState([]);
-
+  const [viewData, setViewData] = useState(null);
+  const [isViewOpen, setIsViewOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     author: '',
@@ -89,10 +91,16 @@ const Catalogue = () => {
         author: b.author,
         isbn: b.isbn,
         cat: b.categoryName,
+
+        // ✅ ADD THESE (VERY IMPORTANT)
+        categoryId: b.categoryId,
+        subjectId: b.subjectId,
+
         total_copies: b.totalCopies,
         available_copies: b.availableCopies,
         branch_id: b.branchId,
-        status: b.availableCopies > 0 ? "Available" : "Out of Stock",
+
+        status: b.availableCopies > 0 ? "Active" : "Out of Stock",
         color:
           b.availableCopies > 0
             ? "text-emerald-600 bg-emerald-50"
@@ -139,6 +147,49 @@ const Catalogue = () => {
 
   // ================= ADD BOOK =================
 
+  // const handleAddBook = async (e) => {
+  //   e.preventDefault();
+
+  //   const payload = {
+  //     isbn: formData.isbn,
+  //     title: formData.title,
+  //     author: formData.author,
+  //     publisher: formData.publisher,
+  //     edition: formData.edition,
+  //     categoryId: Number(formData.categoryId),
+  //     subjectId: Number(formData.subjectId),
+  //     branchId: Number(formData.branch_id),
+  //     totalCopies: Number(formData.stockCount),
+  //   };
+
+  //   try {
+  //     await api.post('/api/v1/admin/books', payload);
+
+  //     // 🔥 refresh from backend
+  //     fetchBooks();
+
+  //     setIsModalOpen(false);
+
+  //     // reset form
+  //     setFormData({
+  //       title: '',
+  //       author: '',
+  //       isbn: '',
+  //       cat: '',
+  //       categoryId: '',
+  //       subjectId: '',
+  //       stockCount: '1',
+  //       publisher: '',
+  //       edition: '',
+  //       subject: '',
+  //       language: '',
+  //       branch_id: ''
+  //     });
+
+  //   } catch (err) {
+  //     console.error("Book add error", err.response?.data || err);
+  //   }
+  // };
   const handleAddBook = async (e) => {
     e.preventDefault();
 
@@ -155,34 +206,59 @@ const Catalogue = () => {
     };
 
     try {
-      await api.post('/api/v1/admin/books', payload);
+      if (isEditMode) {
+        await api.put(`/api/v1/admin/books/${viewData.book_id}`, payload);
+      } else {
+        await api.post('/api/v1/admin/books', payload);
+      }
 
-      // 🔥 refresh from backend
       fetchBooks();
-
       setIsModalOpen(false);
-
-      // reset form
-      setFormData({
-        title: '',
-        author: '',
-        isbn: '',
-        cat: '',
-        categoryId: '',
-        subjectId: '',
-        stockCount: '1',
-        publisher: '',
-        edition: '',
-        subject: '',
-        language: '',
-        branch_id: ''
-      });
+      setIsEditMode(false);
 
     } catch (err) {
-      console.error("Book add error", err.response?.data || err);
+      console.error("Save error", err.response?.data || err);
     }
   };
 
+  // view Modal function
+  const handleView = (book) => {
+    setViewData(book);
+    setIsViewOpen(true);
+  };
+
+  const handleEdit = (book) => {
+    setIsEditMode(true);
+    setIsModalOpen(true);
+    setViewData(book);
+
+    // ✅ load subjects for selected category
+    fetchSubjects(book.categoryId);
+
+    setFormData({
+      title: book.title,
+      author: book.author,
+      isbn: book.isbn,
+      categoryId: book.categoryId || '',
+      subjectId: book.subjectId || '',
+      stockCount: book.total_copies,
+      publisher: '',
+      edition: '',
+      branch_id: book.branch_id
+    });
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this book?")) return;
+
+    try {
+      await api.delete(`/api/v1/admin/books/${id}`);
+
+      fetchBooks(); // refresh
+    } catch (err) {
+      console.error("Delete error", err);
+    }
+  };
   // ================= UI =================
 
   return (
@@ -218,6 +294,8 @@ const Catalogue = () => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/50 border-b border-slate-100">
+                <th className="px-6 py-4 text-[9px] uppercase font-bold">Sr No</th>
+
                 <th className="px-6 py-4 text-[9px] uppercase font-bold">Book Details</th>
                 <th className="px-6 py-4 text-[9px] uppercase font-bold">ISBN</th>
                 <th className="px-6 py-4 text-[9px] uppercase font-bold">Category</th>
@@ -230,36 +308,65 @@ const Catalogue = () => {
             <tbody className="divide-y divide-slate-50">
               {books.map((book, idx) => (
                 <tr key={idx} className="hover:bg-slate-50">
-                  <td className="px-6 py-4 text-[9px] uppercase font-bold">
+                  <td className="px-6 py-4 text-[13px]">{idx + 1}</td>
+
+                  <td className="px-6 py-4 text-[13px] uppercase font-bold">
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-16 bg-slate-100 rounded flex items-center justify-center">
-                        <BookIcon size={24} />
+                        <BookIcon size={20} />
                       </div>
                       <div>
-                        <p className="font-bold text-slate-900">{book.title}</p>
+                        <p className="text-slate-900">{book.title}</p>
                         <p className="text-xs text-slate-500">by {book.author}</p>
                       </div>
                     </div>
                   </td>
 
-                  <td className="px-6 py-4 text-[9px] uppercase font-bold text-sm font-mono text-slate-600">{book.isbn}</td>
+                  <td className="px-6 py-4 text-[13px] text-slate-600">{book.isbn}</td>
 
-                  <td className="px-6 py-4 text-[9px] uppercase font-bold">
-                    <span className="text-sm bg-slate-100 px-2 py-1 rounded">{book.cat}</span>
+                  <td className="px-6 py-4 text-[13px]">{book.cat}
+                    {/* <span className="text-sm bg-slate-100 px-2 py-1 rounded">{book.cat}</span> */}
                   </td>
 
-                  <td className="px-6 py-4 text-[9px] uppercase font-bold">
+                  <td className="px-6 py-4 text-[13px]">
                     <span className={`px-3 py-1 rounded-full text-[10px] font-bold ${book.color}`}>
                       {book.status}
                     </span>
                   </td>
 
-                  <td className="px-6 py-4 text-[9px] uppercase font-bold">
-                    <div className="text-xs font-bold">{book.stock}</div>
+                  <td className="px-6 py-4 text-[13px]">
+                    <div className="text-xs">{book.stock}</div>
                   </td>
+                  <td className="px-6 py-4 text-right gap-1.5">
 
-                  <td className="px-6 py-4 text-[9px] uppercase font-bold text-right">
-                    <MoreVertical />
+                    {/* VIEW */}
+                    <button
+
+                      onClick={() => handleView(book)}
+                      className="p-2 rounded-lg hover:bg-gray-100 text-gray-600 transition"
+
+                    >
+                      <Eye size={14} />
+                    </button>
+
+                    {/* EDIT */}
+                    <button
+                      onClick={() => handleEdit(book)}
+                      className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition"
+                    >
+                      <Edit2 size={14} />
+                    </button>
+
+                    {/* DELETE */}
+                    <button
+
+                      onClick={() => handleDelete(book.book_id)}
+                      className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition"
+                    >
+                      <Trash2Icon size={16} />                     
+                       </button>
+
+
                   </td>
                 </tr>
               ))}
@@ -348,6 +455,24 @@ const Catalogue = () => {
           </div>
 
         </form>
+      </Modal>
+
+
+      <Modal
+        isOpen={isViewOpen}
+        onClose={() => setIsViewOpen(false)}
+        title="Book Details"
+      >
+        {viewData && (
+          <div className="space-y-3 text-sm">
+            <p><b>Title:</b> {viewData.title}</p>
+            <p><b>Author:</b> {viewData.author}</p>
+            <p><b>ISBN:</b> {viewData.isbn}</p>
+            <p><b>Category:</b> {viewData.cat}</p>
+            <p><b>Copies:</b> {viewData.stock}</p>
+            <p><b>Status:</b> {viewData.status}</p>
+          </div>
+        )}
       </Modal>
     </div>
   );
