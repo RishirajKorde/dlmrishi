@@ -62,30 +62,17 @@ const Subjects = () => {
         try {
             let res;
 
+            const queryParams = new URLSearchParams({
+                name: formData.name,
+                categoryId: formData.categoryId
+            }).toString();
+
             if (editingSubject) {
                 // 🔄 UPDATE
-                res = await api.put(
-                    `/api/v1/admin/categories/subjects/${editingSubject.id}`,
-                    null,
-                    {
-                        params: {
-                            name: formData.name,
-                            categoryId: Number(formData.categoryId)
-                        }
-                    }
-                );
+                res = await api.put(`/api/v1/admin/categories/subjects/${editingSubject.id}?${queryParams}`);
             } else {
                 // ➕ CREATE
-                res = await api.post(
-                    '/api/v1/admin/categories/subjects',
-                    null,
-                    {
-                        params: {
-                            name: formData.name,
-                            categoryId: Number(formData.categoryId)
-                        }
-                    }
-                );
+                res = await api.post(`/api/v1/admin/categories/subjects?${queryParams}`);
             }
 
             if (res.data?.status === 200 || res.status === 200) {
@@ -123,6 +110,18 @@ const Subjects = () => {
             console.error("Delete error:", error.response?.data || error);
         }
     };
+
+    const handleToggleStatus = async (id) => {
+        try {
+            const res = await api.patch(`/api/v1/admin/categories/subjects/${id}/toggle`, {});
+            if (res.data?.status === 200 || res.status === 200) {
+                fetchSubjects();
+            }
+        } catch (error) {
+            console.error("Error toggling status:", error);
+        }
+    };
+
     // ✅ RESET FORM
     const resetForm = () => {
         setFormData({
@@ -146,7 +145,7 @@ const Subjects = () => {
                     />
                 </div>
 
-                <Button onClick={() => { resetForm(); setIsModalOpen(true); }} className="flex items-center gap-2">
+                <Button onClick={() => { resetForm(); setIsModalOpen(true); }} className="flex items-center gap-2 w-full md:w-auto justify-center">
                     <Plus size={18} />
                     <span>Add</span>
                 </Button>
@@ -155,14 +154,14 @@ const Subjects = () => {
             {/* TABLE */}
             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
+                    <table className="w-full min-w-[700px] text-left border-collapse">
                         <thead>
                             <tr className="bg-slate-50/50 border-b border-slate-100">
-                                <th className="px-6 py-4 text-[9px] uppercase font-bold">Sr No</th>
-                                <th className="px-6 py-4 text-[9px] uppercase font-bold">Subject</th>
-                                <th className="px-6 py-4 text-[9px] uppercase font-bold">Category</th>
-                                <th className="px-6 py-4 text-[9px] uppercase font-bold">Status</th>
-                                <th className="px-6 py-4 text-[9px] uppercase font-bold text-right">Actions</th>
+                                <th className="px-6 py-4 text-[9px] uppercase font-bold whitespace-nowrap">Sr No</th>
+                                <th className="px-6 py-4 text-[9px] uppercase font-bold whitespace-nowrap">Subject</th>
+                                <th className="px-6 py-4 text-[9px] uppercase font-bold whitespace-nowrap">Category</th>
+                                <th className="px-6 py-4 text-[9px] uppercase font-bold whitespace-nowrap">Status</th>
+                                <th className="px-6 py-4 text-[9px] uppercase font-bold text-center whitespace-nowrap">Actions</th>
                             </tr>
                         </thead>
 
@@ -170,36 +169,48 @@ const Subjects = () => {
                             {subjects.map((s, index) => (
                                 <tr key={s.id} className="hover:bg-slate-50/50">
 
-                                    <td className="px-6 py-4 text-[13px]">{index + 1}</td>
+                                    <td className="px-6 py-4 text-[13px] whitespace-nowrap">{index + 1}</td>
 
-                                    <td className="px-6 py-4 text-[13px] font-bold">
+                                    <td className="px-6 py-4 text-[13px] font-bold whitespace-nowrap">
                                         {s.name}
                                     </td>
 
-                                    <td className="px-6 py-4 text-[13px]">
+                                    <td className="px-6 py-4 text-[13px] whitespace-nowrap">
                                         {s.categoryName}
                                     </td>
 
-                                    <td className="px-6 py-4">
-                                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold border ${s.status === 'Active'
-                                            ? 'text-emerald-600 bg-emerald-50'
-                                            : 'text-amber-600 bg-amber-50'
-                                            }`}>
-                                            {s.status}
-                                        </span>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <div className="flex items-center gap-2">
+                                            {/* Simple Toggle Design */}
+                                            <button
+                                                type="button"
+                                                onClick={() => handleToggleStatus(s.id)}
+                                                className={`w-9 h-5 flex items-center rounded-full p-1 transition-colors ${s.status === 'Active' ? 'bg-emerald-500 justify-end' : 'bg-slate-300 justify-start'
+                                                    }`}
+                                            >
+                                                <div className="w-3.5 h-3.5 bg-white rounded-full shadow-sm" />
+                                            </button>
+
+                                            <span className={`text-[11px] font-semibold ${s.status === 'Active' ? 'text-emerald-600' : 'text-slate-500'}`}>
+                                                {s.status}
+                                            </span>
+                                        </div>
                                     </td>
 
-                                    <td className="px-6 py-4 text-right gap-1.5">
-                                        <button onClick={() => handleEditClick(s)}
-                                            className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition">
-                                            <Edit2 size={14} />
-                                        </button>
-                                        <button className="px-6 py-4 text-right"
-                                            onClick={() => handleDelete(s.id)}
-                                            className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition"
-                                        >
-                                            <Trash2Icon size={14} />
-                                        </button>
+                                    <td className="px-6 py-4 text-right whitespace-nowrap">
+                                        <div className="flex justify-end gap-1.5">
+                                            <button onClick={() => handleEditClick(s)}
+                                                className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition"
+                                            >
+                                                <Edit2 size={14} />
+                                            </button>
+                                            <button
+                                                onClick={() => handleDelete(s.id)}
+                                                className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition"
+                                            >
+                                                <Trash2Icon size={14} />
+                                            </button>
+                                        </div>
                                     </td>
 
                                 </tr>
@@ -216,15 +227,6 @@ const Subjects = () => {
                 title={editingSubject ? "Edit Subject" : "Add Subject"}
             >
                 <form onSubmit={handleSubmit} className="space-y-6">
-
-                    {/* SUBJECT NAME */}
-                    <Input
-                        label="Subject Name"
-                        value={formData.name}
-                        onChange={e => setFormData({ ...formData, name: e.target.value })}
-                        required
-                    />
-
                     {/* CATEGORY */}
                     <Select
                         label="Category"
@@ -239,6 +241,15 @@ const Subjects = () => {
                         ]}
                         required
                     />
+                    {/* SUBJECT NAME */}
+                    <Input
+                        label="Subject Name"
+                        value={formData.name}
+                        onChange={e => setFormData({ ...formData, name: e.target.value })}
+                        required
+                    />
+
+
 
                     <div className="flex gap-3">
                         <Button variant="secondary" className="flex-1" onClick={() => setIsModalOpen(false)}>

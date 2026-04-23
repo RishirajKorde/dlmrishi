@@ -12,10 +12,16 @@ import Branch from './pages/Master/Branch';
 import Users from './pages/Master/Users';
 import Categories from './pages/Master/Categories';
 import Subjects from './pages/Master/Subjects';
+import Login from './pages/Login';
+
 const AppRoutes = () => {
+  const isAuthenticated = !!localStorage.getItem('token');
+
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/login" element={<Login />} />
+      
+      <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />} />
       <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/catalogue" element={<Catalogue />} />
       <Route path="/members" element={<Members />} />

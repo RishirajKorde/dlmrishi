@@ -41,16 +41,25 @@ const Categories = () => {
         }
     };
 
-    // ✅ POST CATEGORY
+    // ✅ POST & PUT CATEGORY
     const handleSubmit = async (e) => {
         e.preventDefault();
 
         try {
-            const res = await api.post('/api/v1/admin/categories', null, {
-                params: {
-                    name: formData.name
-                }
-            });
+            let res;
+            if (editingCategory) {
+                res = await api.put(`/api/v1/admin/categories/${editingCategory.id}`, null, {
+                    params: {
+                        name: formData.name
+                    }
+                });
+            } else {
+                res = await api.post('/api/v1/admin/categories', null, {
+                    params: {
+                        name: formData.name
+                    }
+                });
+            }
 
             if (res.data?.status === 200 || res.status === 200) {
                 fetchCategories();
@@ -59,7 +68,7 @@ const Categories = () => {
             }
 
         } catch (error) {
-            console.error("Error creating category:", error);
+            console.error("Error saving category:", error);
         }
     };
 
@@ -68,6 +77,7 @@ const Categories = () => {
             name: '',
             status: 'Active'
         });
+        setEditingCategory(null);
     };
 
     const handleEditClick = (c) => {
@@ -79,6 +89,18 @@ const Categories = () => {
     const handleDeleteConfirm = () => {
         setCategories(categories.filter(c => c.id !== categoryToDelete.id));
         setIsDeleteModalOpen(false);
+    };
+
+    const handleToggleStatus = async (id) => {
+        try {
+            // Added an empty object {} in case the server requires a body even for a PATCH toggle
+            const res = await api.patch(`/api/v1/admin/categories/${id}/toggle`, {});
+            if (res.data?.status === 200 || res.status === 200) {
+                fetchCategories();
+            }
+        } catch (error) {
+            console.error("Error toggling status:", error);
+        }
     };
 
     return (
@@ -104,7 +126,7 @@ const Categories = () => {
             {/* TABLE */}
             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
+                    <table className="w-full min-w-[700px] text-left border-collapse">
                         <thead>
                             <tr className="bg-slate-50/50 border-b border-slate-100">
                                 <th className="px-6 py-4 text-[9px] uppercase font-bold">Sr No</th>
@@ -132,36 +154,46 @@ const Categories = () => {
                                     </td>
 
                                     <td className="px-6 py-4">
-                                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold border ${c.status === 'Active'
-                                            ? 'text-emerald-600 bg-emerald-50'
-                                            : 'text-amber-600 bg-amber-50'
-                                            }`}>
-                                            {c.status}
-                                        </span>
+                                        <div className="flex items-center gap-2">
+                                            {/* Simple Toggle Design */}
+                                            <button
+                                                type="button"
+                                                onClick={() => handleToggleStatus(c.id)}
+                                                className={`w-9 h-5 flex items-center rounded-full p-1 transition-colors ${c.status === 'Active' ? 'bg-emerald-500 justify-end' : 'bg-slate-300 justify-start'
+                                                    }`}
+                                            >
+                                                <div className="w-3.5 h-3.5 bg-white rounded-full shadow-sm" />
+                                            </button>
+
+                                            <span className={`text-[11px] font-semibold ${c.status === 'Active' ? 'text-emerald-600' : 'text-slate-500'}`}>
+                                                {c.status}
+                                            </span>
+                                        </div>
                                     </td>
 
 
-                                    <td className="px-6 py-4 gap-1.5 text-right">
-                                        <button onClick={() => setViewingCategory(c)}
-                                            className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition">
-                                            <Eye size={14} />
-                                        </button>
-                                        {/* EDIT */}
-                                        <button
-                                            onClick={() => handleEditClick(c)}
-                                            className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition"
-                                        >
-                                            <Edit2 size={14} />
-                                        </button>
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center justify-end gap-1.5">
+                                            <button onClick={() => setViewingCategory(c)}
+                                                className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition">
+                                                <Eye size={14} />
+                                            </button>
+                                            {/* EDIT */}
+                                            <button
+                                                onClick={() => handleEditClick(c)}
+                                                className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition"
+                                            >
+                                                <Edit2 size={14} />
+                                            </button>
 
-                                        {/* DELETE */}
-                                        <button
-                                            onClick={() => handleDelete(c.id)}
-                                            className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition"
-                                        >
-                                            <Trash2 size={14} />
-                                        </button>
-
+                                            {/* DELETE */}
+                                            <button
+                                                onClick={() => handleDelete(c.id)}
+                                                className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition"
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}
@@ -171,7 +203,7 @@ const Categories = () => {
             </div>
 
             {/* FORM MODAL */}
-            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Category Form">
+            <Modal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); resetForm(); }} title={editingCategory ? "Edit Category" : "Add Category"}>
                 <form onSubmit={handleSubmit} className="space-y-6">
 
                     <Input
@@ -192,10 +224,10 @@ const Categories = () => {
                     />
 
                     <div className="flex gap-3">
-                        <Button variant="secondary" className="flex-1" onClick={() => setIsModalOpen(false)}>
+                        <Button type="button" variant="secondary" className="flex-1" onClick={() => { setIsModalOpen(false); resetForm(); }}>
                             Cancel
                         </Button>
-                        <Button className="flex-1" type="submit">Save</Button>
+                        <Button className="flex-1" type="submit">{editingCategory ? "Update" : "Save"}</Button>
                     </div>
 
                 </form>

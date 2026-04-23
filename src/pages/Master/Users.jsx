@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Edit2, Trash2,  Eye  } from 'lucide-react';
+import { Search, Plus, Edit2, Trash2, Eye } from 'lucide-react';
 import Modal from '../../components/Modal';
 import { Input, Select, Button } from '../../components/FormComponents';
 import api from '../../api/axios';
@@ -9,8 +9,8 @@ const Users = () => {
     const [users, setUsers] = useState([]);
     const [branches, setBranches] = useState([]);
     const [editingUser, setEditingUser] = useState(null);
-const [viewingUser, setViewingUser] = useState(null);
-const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+    const [viewingUser, setViewingUser] = useState(null);
+    const [isViewModalOpen, setIsViewModalOpen] = useState(false);
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -42,31 +42,31 @@ const [isViewModalOpen, setIsViewModalOpen] = useState(false);
 
 
     const fetchUsers = async () => {
-    try {
-        const res = await api.get('/api/v1/branch-admin/librarians');
+        try {
+            const res = await api.get('/api/v1/branch-admin/librarians');
 
-        if (res.data?.status === 200) {
-            let list = res.data.data;
+            if (res.data?.status === 200) {
+                let list = res.data.data;
 
-            if (list?.content) list = list.content;
+                if (list?.content) list = list.content;
 
-            const formatted = (list || []).map((u) => ({
-                id: u.id || u.librarianId,   // 🔥 FIX HERE
-                name: u.name,
-                email: u.email,
-                mobile: u.mobile,
-                branchId: u.branchId || u.branch?.branchId,
-                branchName: u.branchName || u.branch?.branchName
-            }));
+                const formatted = (list || []).map((u) => ({
+                    id: u.id || u.userId || u.librarianId,
+                    name: u.name,
+                    email: u.email,
+                    mobile: u.mobile,
+                    branchId: u.branchId || u.branch?.branchId,
+                    branchName: u.branchName || u.branch?.branchName
+                }));
 
-            setUsers(formatted);
+                setUsers(formatted);
+            }
+
+        } catch (err) {
+            console.error(err);
+            setUsers([]);
         }
-
-    } catch (err) {
-        console.error(err);
-        setUsers([]);
-    }
-};
+    };
     const fetchBranches = async () => {
         try {
             const res = await api.get('/api/v1/admin/branches');
@@ -158,7 +158,7 @@ const [isViewModalOpen, setIsViewModalOpen] = useState(false);
                     />
                 </div>
 
-                <Button onClick={() => { resetForm(); setIsModalOpen(true); }} className="flex items-center gap-2">
+                <Button onClick={() => { resetForm(); setIsModalOpen(true); }} className="flex items-center gap-2 w-full md:w-auto justify-center">
                     <Plus size={18} />
                     <span>Add</span>
                 </Button>
@@ -171,12 +171,12 @@ const [isViewModalOpen, setIsViewModalOpen] = useState(false);
 
                         <thead>
                             <tr className="bg-slate-50/50 border-b border-slate-100">
-                                <th className="px-6 py-4 text-[9px] uppercase font-bold">Sr No</th>
-                                <th className="px-6 py-4 text-[9px] uppercase font-bold">Name</th>
-                                <th className="px-6 py-4 text-[9px] uppercase font-bold">Email</th>
-                                <th className="px-6 py-4 text-[9px] uppercase font-bold">Mobile</th>
-                                <th className="px-6 py-4 text-[9px] uppercase font-bold">Branch</th>
-                                <th className="px-6 py-4 text-[9px] uppercase font-bold text-right">Actions</th>
+                                <th className="px-6 py-4 text-[9px] uppercase font-bold whitespace-nowrap">Sr No</th>
+                                <th className="px-6 py-4 text-[9px] uppercase font-bold whitespace-nowrap">Name</th>
+                                <th className="px-6 py-4 text-[9px] uppercase font-bold whitespace-nowrap">Email</th>
+                                <th className="px-6 py-4 text-[9px] uppercase font-bold whitespace-nowrap">Mobile</th>
+                                <th className="px-6 py-4 text-[9px] uppercase font-bold whitespace-nowrap">Branch</th>
+                                <th className="px-6 py-4 text-[9px] uppercase font-bold text-center whitespace-nowrap">Actions</th>
                             </tr>
                         </thead>
 
@@ -184,50 +184,50 @@ const [isViewModalOpen, setIsViewModalOpen] = useState(false);
                             {users.map((u, index) => (
                                 <tr key={u.id} className="hover:bg-slate-50/50">
 
-                                    <td className="px-6 py-4 text-[13px]">{index + 1}</td>
+                                    <td className="px-6 py-4 text-[13px] whitespace-nowrap">{index + 1}</td>
 
-                                    <td className="px-6 py-4 text-[13px] font-bold">
+                                    <td className="px-6 py-4 text-[13px] font-bold whitespace-nowrap">
                                         {u.name}
                                     </td>
 
-                                    <td className="px-6 py-4 text-[13px]">
+                                    <td className="px-6 py-4 text-[13px] whitespace-nowrap">
                                         {u.email}
                                     </td>
 
-                                    <td className="px-6 py-4 text-[13px]">
+                                    <td className="px-6 py-4 text-[13px] whitespace-nowrap">
                                         {u.mobile}
                                     </td>
 
-                                    <td className="px-6 py-4 text-[13px]">
+                                    <td className="px-6 py-4 text-[13px] whitespace-nowrap">
                                         {u.branchName || u.branch?.branchName || 'N/A'}
                                     </td>
 
-                                    <td className="px-6 py-4 text-right">
+                                    <td className="px-6 py-4 text-right whitespace-nowrap">
+                                        <div className="flex justify-end gap-1.5">
+                                            <button
+                                                onClick={() => {
+                                                    setViewingUser(u);
+                                                    setIsViewModalOpen(true);
+                                                }}
+                                                className="p-2 rounded-lg hover:bg-gray-100 text-gray-600 transition"
+                                            >
+                                                <Eye size={14} />
+                                            </button>
 
-                                            {/* 👁️ VIEW */}
-    <button
-        onClick={() => {
-            setViewingUser(u);
-            setIsViewModalOpen(true);
-        }}
-        className="p-2 rounded-lg hover:bg-gray-100 text-gray-600 transition"
-    >
-        <Eye size={14} />
-    </button>
+                                            <button
+                                                onClick={() => handleEditClick(u)}
+                                                className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition"
+                                            >
+                                                <Edit2 size={14} />
+                                            </button>
 
-                                        <button
-                                            onClick={() => handleEditClick(u)}
-                                            className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition"
-                                        >
-                                            <Edit2 size={14} />
-                                        </button>
-
-                                        <button
-                                            onClick={() => handleDelete(u.id)}
-                                            className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition"
-                                        >
-                                            <Trash2 size={14} />
-                                        </button>
+                                            <button
+                                                onClick={() => handleDelete(u.id)}
+                                                className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition"
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </div>
                                     </td>
 
                                 </tr>
@@ -283,39 +283,39 @@ const [isViewModalOpen, setIsViewModalOpen] = useState(false);
 
                 </form>
             </Modal>
-<Modal
-    isOpen={isViewModalOpen}
-    onClose={() => setIsViewModalOpen(false)}
-    title="librarians Details"
->
-    {viewingUser && (
-        <div className="space-y-4 text-[13px]">
+            <Modal
+                isOpen={isViewModalOpen}
+                onClose={() => setIsViewModalOpen(false)}
+                title="librarians Details"
+            >
+                {viewingUser && (
+                    <div className="space-y-4 text-[13px]">
 
-            <div>
-                <p className="text-slate-400">Name</p>
-                <p className="font-bold">{viewingUser.name}</p>
-            </div>
+                        <div>
+                            <p className="text-slate-400">Name</p>
+                            <p className="font-bold">{viewingUser.name}</p>
+                        </div>
 
-            <div>
-                <p className="text-slate-400">Email</p>
-                <p className="font-bold">{viewingUser.email}</p>
-            </div>
+                        <div>
+                            <p className="text-slate-400">Email</p>
+                            <p className="font-bold">{viewingUser.email}</p>
+                        </div>
 
-            <div>
-                <p className="text-slate-400">Mobile</p>
-                <p className="font-bold">{viewingUser.mobile}</p>
-            </div>
+                        <div>
+                            <p className="text-slate-400">Mobile</p>
+                            <p className="font-bold">{viewingUser.mobile}</p>
+                        </div>
 
-            <div>
-                <p className="text-slate-400">Branch</p>
-                <p className="font-bold">
-                    {viewingUser.branchName || viewingUser.branch?.branchName || 'N/A'}
-                </p>
-            </div>
+                        <div>
+                            <p className="text-slate-400">Branch</p>
+                            <p className="font-bold">
+                                {viewingUser.branchName || viewingUser.branch?.branchName || 'N/A'}
+                            </p>
+                        </div>
 
-        </div>
-    )}
-</Modal>
+                    </div>
+                )}
+            </Modal>
         </div>
     );
 };

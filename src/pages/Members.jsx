@@ -44,17 +44,32 @@ const Members = () => {
         const formatted = (list || []).map((m) => ({
           id: m.memberId || m.id,
           name: m.name,
+          membershipId: m.membershipId,
           email: m.email,
           mobile: m.mobile,
-          branchId: m.branchId || m.branch?.branchId,
+          aadhaarNumber: m.aadhaarNumber,
+          address: m.address,
+          branchId: m.branchId || m.branch?.branchId || '',
           branchName: m.branchName || m.branch?.branchName,
-          validityMonths: m.validityMonths
+          validityMonths: Number(m.validityMonths),
+          status: m.isActive ? 'Active' : 'Inactive'
         }));
 
         setMembers(formatted);
       }
     } catch (error) {
       console.error(error);
+    }
+  };
+
+  const handleToggleStatus = async (id) => {
+    try {
+      const res = await api.patch(`/api/v1/branch-admin/librarians/members/${id}/toggle-status`, {});
+      if (res.data?.status === 200 || res.status === 200) {
+        fetchMembers();
+      }
+    } catch (error) {
+      console.error("Error toggling status:", error);
     }
   };
 
@@ -98,7 +113,7 @@ const Members = () => {
 
       if (editingMember) {
         res = await api.put(
-          `/api/v1/branch-admin/librarians/member/${editingMember.id}`,
+          `/api/v1/branch-admin/librarians/members/${editingMember.id}`,
           fd,
           {
             headers: {
@@ -194,16 +209,18 @@ const Members = () => {
       {/* TABLE (UNCHANGED STYLE) */}
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full min-w-[1000px] text-left border-collapse">
 
             <thead>
               <tr className="bg-slate-50/50 border-b border-slate-100">
                 <th className="px-6 py-4 text-[9px] uppercase font-bold">Sr No</th>
                 <th className="px-6 py-4 text-[9px] uppercase font-bold">Name</th>
+                <th className="px-6 py-4 text-[9px] uppercase font-bold">Membership ID</th>
                 <th className="px-6 py-4 text-[9px] uppercase font-bold">Mobile</th>
                 <th className="px-6 py-4 text-[9px] uppercase font-bold">Branch</th>
                 <th className="px-6 py-4 text-[9px] uppercase font-bold">Validity</th>
-                <th className="px-6 py-4 text-[9px] uppercase font-bold text-right">Actions</th>
+                <th className="px-6 py-4 text-[9px] uppercase font-bold">Status</th>
+                <th className="px-6 py-4 text-[9px] uppercase font-bold text-center">Actions</th>
               </tr>
             </thead>
 
@@ -215,6 +232,10 @@ const Members = () => {
 
                   <td className="px-6 py-4 text-[13px] font-bold">
                     {m.name}
+                  </td>
+
+                  <td className="px-6 py-4 text-[13px] font-medium text-slate-500">
+                    {m.membershipId}
                   </td>
 
                   <td className="px-6 py-4 text-[13px]">
@@ -229,30 +250,50 @@ const Members = () => {
                     {m.validityMonths} Months
                   </td>
 
-                  <td className="px-6 py-4 text-right gap-1.5">
-                    {/* 👁 VIEW */}
-                    <button
-                      onClick={() => {
-                        setViewingMember(m);
-                        setIsViewModalOpen(true);
-                      }}
-                      className="p-2 rounded-lg hover:bg-gray-100 text-gray-600 transition"
-                    >
-                      <Eye size={14} />
-                    </button>
-                    <button
-                      onClick={() => handleEditClick(m)}
-                      className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition"
-                    >
-                      <Edit2 size={14} />
-                    </button>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-2">
+                      {/* Simple Toggle Design */}
+                      <button
+                        type="button"
+                        onClick={() => handleToggleStatus(m.id)}
+                        className={`w-9 h-5 flex items-center rounded-full p-1 transition-colors ${m.status === 'Active' ? 'bg-emerald-500 justify-end' : 'bg-slate-300 justify-start'
+                          }`}
+                      >
+                        <div className="w-3.5 h-3.5 bg-white rounded-full shadow-sm" />
+                      </button>
 
-                    <button
-                      onClick={() => handleDelete(m.id)}
-                      className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition"
-                    >
-                      <Trash2Icon size={16} />
-                    </button>
+                      <span className={`text-[11px] font-semibold ${m.status === 'Active' ? 'text-emerald-600' : 'text-slate-500'}`}>
+                        {m.status}
+                      </span>
+                    </div>
+                  </td>
+
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex justify-end gap-1.5">
+                      {/* 👁 VIEW */}
+                      <button
+                        onClick={() => {
+                          setViewingMember(m);
+                          setIsViewModalOpen(true);
+                        }}
+                        className="p-2 rounded-lg hover:bg-gray-100 text-gray-600 transition"
+                      >
+                        <Eye size={14} />
+                      </button>
+                      <button
+                        onClick={() => handleEditClick(m)}
+                        className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition"
+                      >
+                        <Edit2 size={14} />
+                      </button>
+
+                      <button
+                        onClick={() => handleDelete(m.id)}
+                        className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition"
+                      >
+                        <Trash2Icon size={16} />
+                      </button>
+                    </div>
                   </td>
 
                 </tr>

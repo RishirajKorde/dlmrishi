@@ -82,30 +82,29 @@ const Catalogue = () => {
 
       console.log("Books FULL response:", res.data);
 
-      const booksData = res.data.data.content || [];
-
+      const booksData = res.data.data?.content || res.data.data || [];
 
       const formatted = booksData.map((b) => ({
         book_id: b.bookId,
         title: b.title,
         author: b.author,
         isbn: b.isbn,
-        cat: b.categoryName,
-
-        // ✅ ADD THESE (VERY IMPORTANT)
+        categoryName: b.categoryName,
+        subjectName: b.subjectName,
+        branchName: b.branchName,
+        issuedCopies: b.issuedCopies,
+        availableCopies: b.availableCopies,
+        totalCopies: b.totalCopies,
+        status: b.status,
+        isActive: b.isActive,
         categoryId: b.categoryId,
         subjectId: b.subjectId,
+        branchId: b.branchId,
 
-        total_copies: b.totalCopies,
-        available_copies: b.availableCopies,
-        branch_id: b.branchId,
-
-        status: b.availableCopies > 0 ? "Active" : "Out of Stock",
-        color:
-          b.availableCopies > 0
-            ? "text-emerald-600 bg-emerald-50"
-            : "text-rose-600 bg-rose-50",
-        stock: `${b.availableCopies}/${b.totalCopies}`,
+        statusColor:
+          b.status === "AVAILABLE" ? "text-emerald-600 bg-emerald-50" :
+            b.status === "ISSUED" ? "text-amber-600 bg-amber-50" :
+              "text-rose-600 bg-rose-50"
       }));
 
       setBooks(formatted);
@@ -241,10 +240,10 @@ const Catalogue = () => {
       isbn: book.isbn,
       categoryId: book.categoryId || '',
       subjectId: book.subjectId || '',
-      stockCount: book.total_copies,
+      stockCount: book.totalCopies,
       publisher: '',
       edition: '',
-      branch_id: book.branch_id
+      branch_id: book.branchId
     });
   };
 
@@ -291,82 +290,85 @@ const Catalogue = () => {
       {/* Table */}
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full min-w-[1100px] text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/50 border-b border-slate-100">
-                <th className="px-6 py-4 text-[9px] uppercase font-bold">Sr No</th>
-
-                <th className="px-6 py-4 text-[9px] uppercase font-bold">Book Details</th>
-                <th className="px-6 py-4 text-[9px] uppercase font-bold">ISBN</th>
-                <th className="px-6 py-4 text-[9px] uppercase font-bold">Category</th>
-                <th className="px-6 py-4 text-[9px] uppercase font-bold">Status</th>
-                <th className="px-6 py-4 text-[9px] uppercase font-bold">Copies</th>
-                <th className="px-6 py-4 text-[9px] uppercase font-bold">Action</th>
+                <th className="px-6 py-4 text-[9px] uppercase font-bold whitespace-nowrap">Sr No</th>
+                <th className="px-6 py-4 text-[9px] uppercase font-bold whitespace-nowrap">Book Info</th>
+                <th className="px-6 py-4 text-[9px] uppercase font-bold whitespace-nowrap">ISBN</th>
+                <th className="px-6 py-4 text-[9px] uppercase font-bold whitespace-nowrap">Category / Subject</th>
+                <th className="px-6 py-4 text-[9px] uppercase font-bold whitespace-nowrap">Branch</th>
+                <th className="px-6 py-4 text-[9px] uppercase font-bold whitespace-nowrap text-center">Copies (T/A/I)</th>
+                <th className="px-6 py-4 text-[9px] uppercase font-bold whitespace-nowrap text-center">Status</th>
+                <th className="px-6 py-4 text-[9px] uppercase font-bold whitespace-nowrap text-center">Actions</th>
               </tr>
             </thead>
 
             <tbody className="divide-y divide-slate-50">
               {books.map((book, idx) => (
-                <tr key={idx} className="hover:bg-slate-50">
+                <tr key={idx} className="hover:bg-slate-50/50">
                   <td className="px-6 py-4 text-[13px]">{idx + 1}</td>
 
-                  <td className="px-6 py-4 text-[13px] uppercase font-bold">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-16 bg-slate-100 rounded flex items-center justify-center">
-                        <BookIcon size={20} />
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-11 bg-blue-50 rounded flex items-center justify-center text-blue-600 border">
+                        <BookIcon size={14} />
                       </div>
                       <div>
-                        <p className="text-slate-900">{book.title}</p>
-                        <p className="text-xs text-slate-500">by {book.author}</p>
+                        <p className="text-[13px] font-bold text-slate-900 leading-tight">{book.title}</p>
+                        <p className="text-[11px] text-slate-500">by {book.author}</p>
                       </div>
                     </div>
                   </td>
 
-                  <td className="px-6 py-4 text-[13px] text-slate-600">{book.isbn}</td>
+                  <td className="px-6 py-4 text-[13px] text-slate-600 font-mono">{book.isbn}</td>
 
-                  <td className="px-6 py-4 text-[13px]">{book.cat}
-                    {/* <span className="text-sm bg-slate-100 px-2 py-1 rounded">{book.cat}</span> */}
+                  <td className="px-6 py-4">
+                    <p className="text-[13px] font-semibold text-slate-700">{book.categoryName}</p>
+                    <p className="text-[11px] text-slate-400">{book.subjectName}</p>
                   </td>
 
-                  <td className="px-6 py-4 text-[13px]">
-                    <span className={`px-3 py-1 rounded-full text-[10px] font-bold ${book.color}`}>
+                  <td className="px-6 py-4 text-[13px] text-slate-600">{book.branchName}</td>
+
+                  <td className="px-6 py-4 text-center">
+                    <div className="inline-flex flex-col items-center">
+                      <span className="text-[13px] font-bold text-slate-800">{book.totalCopies}</span>
+                      <div className="flex gap-2 text-[10px] text-slate-400 border-t mt-1 pt-1">
+                        <span className="text-emerald-600">A: {book.availableCopies}</span>
+                        <span className="text-amber-600">I: {book.issuedCopies}</span>
+                      </div>
+                    </div>
+                  </td>
+
+                  <td className="px-6 py-4 text-center">
+                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${book.statusColor}`}>
                       {book.status}
                     </span>
                   </td>
 
-                  <td className="px-6 py-4 text-[13px]">
-                    <div className="text-xs">{book.stock}</div>
-                  </td>
-                  <td className="px-6 py-4 text-right gap-1.5">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center justify-center gap-1">
+                      <button
+                        onClick={() => handleView(book)}
+                        className="p-2 rounded-lg hover:bg-gray-100 text-gray-600 transition"
+                      >
+                        <Eye size={14} />
+                      </button>
 
-                    {/* VIEW */}
-                    <button
+                      <button
+                        onClick={() => handleEdit(book)}
+                        className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition"
+                      >
+                        <Edit2 size={14} />
+                      </button>
 
-                      onClick={() => handleView(book)}
-                      className="p-2 rounded-lg hover:bg-gray-100 text-gray-600 transition"
-
-                    >
-                      <Eye size={14} />
-                    </button>
-
-                    {/* EDIT */}
-                    <button
-                      onClick={() => handleEdit(book)}
-                      className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition"
-                    >
-                      <Edit2 size={14} />
-                    </button>
-
-                    {/* DELETE */}
-                    <button
-
-                      onClick={() => handleDelete(book.book_id)}
-                      className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition"
-                    >
-                      <Trash2Icon size={16} />                     
-                       </button>
-
-
+                      <button
+                        onClick={() => handleDelete(book.book_id)}
+                        className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition"
+                      >
+                        <Trash2Icon size={14} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -464,13 +466,61 @@ const Catalogue = () => {
         title="Book Details"
       >
         {viewData && (
-          <div className="space-y-3 text-sm">
-            <p><b>Title:</b> {viewData.title}</p>
-            <p><b>Author:</b> {viewData.author}</p>
-            <p><b>ISBN:</b> {viewData.isbn}</p>
-            <p><b>Category:</b> {viewData.cat}</p>
-            <p><b>Copies:</b> {viewData.stock}</p>
-            <p><b>Status:</b> {viewData.status}</p>
+          <div className="space-y-4 text-[13px]">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-slate-400 block mb-1">Title</label>
+                <p className="font-bold">{viewData.title}</p>
+              </div>
+              <div>
+                <label className="text-slate-400 block mb-1">Author</label>
+                <p className="font-bold">{viewData.author}</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-slate-400 block mb-1">ISBN</label>
+                <p className="font-bold font-mono">{viewData.isbn}</p>
+              </div>
+              <div>
+                <label className="text-slate-400 block mb-1">Branch</label>
+                <p className="font-bold">{viewData.branchName}</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-slate-400 block mb-1">Category</label>
+                <p className="font-bold">{viewData.categoryName}</p>
+              </div>
+              <div>
+                <label className="text-slate-400 block mb-1">Subject</label>
+                <p className="font-bold">{viewData.subjectName}</p>
+              </div>
+            </div>
+
+            <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 grid grid-cols-3 gap-2 text-center">
+              <div>
+                <label className="text-slate-400 block text-[10px] uppercase font-bold">Total</label>
+                <p className="font-black text-slate-800 text-lg">{viewData.totalCopies}</p>
+              </div>
+              <div>
+                <label className="text-emerald-500 block text-[10px] uppercase font-bold">Available</label>
+                <p className="font-black text-emerald-600 text-lg">{viewData.availableCopies}</p>
+              </div>
+              <div>
+                <label className="text-amber-500 block text-[10px] uppercase font-bold">Issued</label>
+                <p className="font-black text-amber-600 text-lg">{viewData.issuedCopies}</p>
+              </div>
+            </div>
+
+            <div>
+              <label className="text-slate-400 block mb-1">Current Status</label>
+              <span className={`px-3 py-1 rounded-full text-[11px] font-bold border ${viewData.statusColor}`}>
+                {viewData.status}
+              </span>
+            </div>
           </div>
         )}
       </Modal>
