@@ -8,6 +8,7 @@ const Members = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [members, setMembers] = useState([]);
   const [branches, setBranches] = useState([]);
+  const [membershipTypes, setMembershipTypes] = useState([]);
   const [editingMember, setEditingMember] = useState(null);
   const [viewingMember, setViewingMember] = useState(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
@@ -19,6 +20,7 @@ const Members = () => {
     branchId: '',
     validityMonths: '',
     address: '',
+    memberShipTypeId: '',
     photo: null
   });
 
@@ -28,6 +30,7 @@ const Members = () => {
   useEffect(() => {
     fetchMembers();
     fetchBranches();
+    fetchMembershipTypes();
   }, []);
 
   // =========================
@@ -49,9 +52,16 @@ const Members = () => {
           mobile: m.mobile,
           aadhaarNumber: m.aadhaarNumber,
           address: m.address,
-          branchId: m.branchId || m.branch?.branchId || '',
-          branchName: m.branchName || m.branch?.branchName,
+          branchId: m.branchId || m.branch?.branchId || m.branch?.id || '',
+          branchName: m.branchName || m.branch?.branchName || '',
           validityMonths: Number(m.validityMonths),
+          memberShipTypeId: m.membershipTypeId || m.memberShipTypeId || m.membershipType?.id,
+          membershipTypeName: m.membershipTypeName || m.membershipType?.name,
+          validFrom: m.validFrom,
+          validTo: m.validTo,
+          validityLabel: m.validityLabel,
+          joinedDate: m.joinedDate,
+          photo: m.photoUrl || m.photo,
           status: m.isActive ? 'Active' : 'Inactive'
         }));
 
@@ -88,6 +98,17 @@ const Members = () => {
     }
   };
 
+  const fetchMembershipTypes = async () => {
+    try {
+      const res = await api.get('/api/v1/admin/membership-type');
+      if (res.data?.status === 200) {
+        setMembershipTypes(res.data.data || []);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   // =========================
   // ADD / UPDATE (FORMDATA)
   // =========================
@@ -104,6 +125,7 @@ const Members = () => {
       fd.append("branchId", Number(formData.branchId));
       fd.append("validityMonths", formData.validityMonths);
       fd.append("address", formData.address);
+      fd.append("memberShipTypeId", Number(formData.memberShipTypeId));
 
       if (formData.photo) {
         fd.append("photo", formData.photo);
@@ -152,6 +174,8 @@ const Members = () => {
 
     setFormData({
       ...m,
+      branchId: String(m.branchId || ''),
+      memberShipTypeId: String(m.memberShipTypeId || ''),
       photo: null
     });
 
@@ -181,6 +205,7 @@ const Members = () => {
       branchId: '',
       validityMonths: '',
       address: '',
+      memberShipTypeId: '',
       photo: null
     });
     setEditingMember(null);
@@ -218,6 +243,7 @@ const Members = () => {
                 <th className="px-6 py-4 text-[9px] uppercase font-bold">Membership ID</th>
                 <th className="px-6 py-4 text-[9px] uppercase font-bold">Mobile</th>
                 <th className="px-6 py-4 text-[9px] uppercase font-bold">Branch</th>
+                <th className="px-6 py-4 text-[9px] uppercase font-bold">Type</th>
                 <th className="px-6 py-4 text-[9px] uppercase font-bold">Validity</th>
                 <th className="px-6 py-4 text-[9px] uppercase font-bold">Status</th>
                 <th className="px-6 py-4 text-[9px] uppercase font-bold text-center">Actions</th>
@@ -244,6 +270,12 @@ const Members = () => {
 
                   <td className="px-6 py-4 text-[13px]">
                     {m.branchName}
+                  </td>
+
+                  <td className="px-6 py-4">
+                    <span className="px-2 py-1 bg-blue-50 text-blue-600 rounded-md text-[11px] font-bold">
+                      {m.membershipTypeName}
+                    </span>
                   </td>
 
                   <td className="px-6 py-4 text-[13px]">
@@ -332,8 +364,21 @@ const Members = () => {
             options={[
               { label: 'Select Branch', value: '' },
               ...branches.map(b => ({
-                label: b.branchName,
-                value: b.branchId
+                label: b.branchName || b.name,
+                value: String(b.branchId || b.id || '')
+              }))
+            ]}
+          />
+
+          <Select
+            label="Membership Type"
+            value={formData.memberShipTypeId}
+            onChange={e => setFormData({ ...formData, memberShipTypeId: e.target.value })}
+            options={[
+              { label: 'Select Type', value: '' },
+              ...membershipTypes.map(t => ({
+                label: t.name,
+                value: t.id
               }))
             ]}
           />
@@ -399,13 +444,45 @@ const Members = () => {
             </div>
 
             <div>
-              <p className="text-slate-400">Branch</p>
-              <p className="font-bold">{viewingMember.branchName}</p>
+              <p className="text-slate-400">Membership ID</p>
+              <p className="font-bold">{viewingMember.membershipId}</p>
             </div>
 
             <div>
-              <p className="text-slate-400">Validity</p>
-              <p className="font-bold">{viewingMember.validityMonths} Months</p>
+              <p className="text-slate-400">Membership Type</p>
+              <p className="font-bold text-blue-600">{viewingMember.membershipTypeName}</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-slate-400">Joined Date</p>
+                <p className="font-bold">{viewingMember.joinedDate}</p>
+              </div>
+              <div>
+                <p className="text-slate-400">Status</p>
+                <p className={`font-bold ${viewingMember.status === 'Active' ? 'text-emerald-600' : 'text-red-500'}`}>{viewingMember.status}</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-slate-400">Valid From</p>
+                <p className="font-bold">{viewingMember.validFrom}</p>
+              </div>
+              <div>
+                <p className="text-slate-400">Valid To</p>
+                <p className="font-bold">{viewingMember.validTo}</p>
+              </div>
+            </div>
+
+            <div>
+              <p className="text-slate-400">Validity Period</p>
+              <p className="font-bold">{viewingMember.validityLabel} ({viewingMember.validityMonths} Months)</p>
+            </div>
+
+            <div>
+              <p className="text-slate-400">Branch</p>
+              <p className="font-bold">{viewingMember.branchName}</p>
             </div>
 
             <div>

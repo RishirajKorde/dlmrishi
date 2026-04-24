@@ -70,7 +70,7 @@ const Sidebar = ({ isCollapsed, setCollapsed, isMobile, isOpen, onClose }) => {
 
     { to: '/branch', icon: GitBranchIcon, label: 'Branch' },
     { to: '/users', icon: User2Icon, label: 'Librarian' },
-
+    { to: '/membership-type', icon: ShieldCheck, label: 'Membership Type' },
   ];
 
   const sidebarClasses = `

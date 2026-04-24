@@ -12,6 +12,7 @@ import Branch from './pages/Master/Branch';
 import Users from './pages/Master/Users';
 import Categories from './pages/Master/Categories';
 import Subjects from './pages/Master/Subjects';
+import MembershipType from './pages/Master/MembershipType';
 import Login from './pages/Login';
 
 const AppRoutes = () => {
@@ -35,6 +36,7 @@ const AppRoutes = () => {
       <Route path="/users" element={<Users />} />
       <Route path="/Categories" element={<Categories />} />
       <Route path="/Subjects" element={<Subjects />} />
+      <Route path="/membership-type" element={<MembershipType />} />
 
 
       <Route path="*" element={<div className="p-8 text-center">404 - Page Not Found</div>} />
