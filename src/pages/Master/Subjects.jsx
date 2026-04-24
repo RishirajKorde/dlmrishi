@@ -113,7 +113,7 @@ const Subjects = () => {
 
     const handleToggleStatus = async (id) => {
         try {
-            const res = await api.patch(`/api/v1/admin/categories/subjects/${id}/toggle`, {});
+            const res = await api.patch(`/api/v1/admin/categories/subjects/${id}/toggle`);
             if (res.data?.status === 200 || res.status === 200) {
                 fetchSubjects();
             }

@@ -106,7 +106,7 @@ const Branch = () => {
 
     const handleToggleStatus = async (id) => {
         try {
-            const res = await api.patch(`/api/v1/admin/branches/${id}/toggle`, {});
+            const res = await api.patch(`/api/v1/admin/branches/${id}/toggle-status`);
             if (res.data?.status === 200 || res.status === 200) {
                 fetchBranches();
             }
