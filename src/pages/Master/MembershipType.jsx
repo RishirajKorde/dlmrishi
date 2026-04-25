@@ -30,8 +30,8 @@ const MembershipType = () => {
         fetchMembershipTypes();
     }, []);
 
-    const fetchMembershipTypes = async () => {
-        setLoading(true);
+    const fetchMembershipTypes = async (showSkeleton = true) => {
+        if (showSkeleton) setLoading(true);
         try {
             const res = await api.get('/api/v1/admin/membership-type');
             if (res.data?.status === 200) {
@@ -132,7 +132,7 @@ const MembershipType = () => {
             const res = await api.patch(`/api/v1/admin/membership-type/${id}/toggle`, {});
             if (res.data?.status === 200 || res.status === 200) {
                 toast.success('Status updated successfully!');
-                fetchMembershipTypes();
+                fetchMembershipTypes(false);
             }
         } catch (error) {
             toast.error('Failed to update status.');

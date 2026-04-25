@@ -30,8 +30,8 @@ const Branch = () => {
         fetchBranches();
     }, []);
 
-    const fetchBranches = async () => {
-        setLoading(true);
+    const fetchBranches = async (showSkeleton = true) => {
+        if (showSkeleton) setLoading(true);
         try {
             const res = await api.get('/api/v1/admin/branches');
 
@@ -120,7 +120,7 @@ const Branch = () => {
             const res = await api.patch(`/api/v1/admin/branches/${id}/toggle-status`);
             if (res.data?.status === 200 || res.status === 200) {
                 toast.success('Status updated successfully!');
-                fetchBranches();
+                fetchBranches(false);
             }
         } catch (error) {
             toast.error('Failed to update status.');

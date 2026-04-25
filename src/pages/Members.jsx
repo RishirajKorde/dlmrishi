@@ -39,8 +39,8 @@ const Members = () => {
   // =========================
   // FETCH MEMBERS
   // =========================
-  const fetchMembers = async () => {
-    setLoading(true);
+  const fetchMembers = async (showSkeleton = true) => {
+    if (showSkeleton) setLoading(true);
     try {
       const res = await api.get('/api/v1/branch-admin/librarians/members');
 
@@ -83,7 +83,7 @@ const Members = () => {
       const res = await api.patch(`/api/v1/branch-admin/librarians/members/${id}/toggle-status`, {});
       if (res.data?.status === 200 || res.status === 200) {
         toast.success('Status updated successfully!');
-        fetchMembers();
+        fetchMembers(false);
       }
     } catch (error) {
       toast.error('Failed to update status.');

@@ -38,8 +38,8 @@ const Subjects = () => {
     };
 
     // ✅ FETCH SUBJECTS
-    const fetchSubjects = async () => {
-        setLoading(true);
+    const fetchSubjects = async (showSkeleton = true) => {
+        if (showSkeleton) setLoading(true);
         try {
             const res = await api.get('/api/v1/admin/categories/subjects');
 
@@ -125,7 +125,7 @@ const Subjects = () => {
             const res = await api.patch(`/api/v1/admin/categories/subjects/${id}/toggle`);
             if (res.data?.status === 200 || res.status === 200) {
                 toast.success('Status updated successfully!');
-                fetchSubjects();
+                fetchSubjects(false);
             }
         } catch (error) {
             toast.error('Failed to update status.');

@@ -26,8 +26,8 @@ const Categories = () => {
         fetchCategories();
     }, []);
 
-    const fetchCategories = async () => {
-        setLoading(true);
+    const fetchCategories = async (showSkeleton = true) => {
+        if (showSkeleton) setLoading(true);
         try {
             const res = await api.get('/api/v1/admin/categories');
             // console.log("kordec",res);
@@ -117,7 +117,7 @@ const Categories = () => {
             const res = await api.patch(`/api/v1/admin/categories/${id}/toggle`, {});
             if (res.data?.status === 200 || res.status === 200) {
                 toast.success('Status updated successfully!');
-                fetchCategories();
+                fetchCategories(false);
             }
         } catch (error) {
             toast.error('Failed to update status.');
