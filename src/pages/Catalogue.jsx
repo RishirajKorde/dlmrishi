@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Search, Plus, Filter, MoreVertical, Book as BookIcon, Edit2, Trash2Icon, Eye } from 'lucide-react';
 import Modal from '../components/Modal';
 import { Input, Select, Button } from '../components/FormComponents';
+import TableSkeleton from '../components/TableSkeleton';
 import api from '../api/axios';
+import { toast } from 'react-toastify';
 
 const Catalogue = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -17,6 +19,7 @@ const Catalogue = () => {
   const [viewData, setViewData] = useState(null);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     title: '',
     author: '',
@@ -77,6 +80,7 @@ const Catalogue = () => {
 
 
   const fetchBooks = async () => {
+    setLoading(true);
     try {
       const res = await api.get('/api/v1/admin/books');
 
@@ -111,6 +115,8 @@ const Catalogue = () => {
 
     } catch (err) {
       console.error("Books fetch error", err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -207,8 +213,10 @@ const Catalogue = () => {
     try {
       if (isEditMode) {
         await api.put(`/api/v1/admin/books/${viewData.book_id}`, payload);
+        toast.success('Book updated successfully!');
       } else {
         await api.post('/api/v1/admin/books', payload);
+        toast.success('Book added successfully!');
       }
 
       fetchBooks();
@@ -216,6 +224,7 @@ const Catalogue = () => {
       setIsEditMode(false);
 
     } catch (err) {
+      toast.error(isEditMode ? 'Failed to update book.' : 'Failed to add book.');
       console.error("Save error", err.response?.data || err);
     }
   };
@@ -252,9 +261,10 @@ const Catalogue = () => {
 
     try {
       await api.delete(`/api/v1/admin/books/${id}`);
-
+      toast.success('Book deleted successfully!');
       fetchBooks(); // refresh
     } catch (err) {
+      toast.error('Failed to delete book.');
       console.error("Delete error", err);
     }
   };
@@ -305,73 +315,77 @@ const Catalogue = () => {
             </thead>
 
             <tbody className="divide-y divide-slate-50">
-              {books.map((book, idx) => (
-                <tr key={idx} className="hover:bg-slate-50/50">
-                  <td className="px-6 py-4 text-[13px]">{idx + 1}</td>
+              {loading ? (
+                <TableSkeleton rows={5} columns={8} />
+              ) : (
+                books.map((book, idx) => (
+                  <tr key={idx} className="hover:bg-slate-50/50">
+                    <td className="px-6 py-4 text-[13px]">{idx + 1}</td>
 
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-11 bg-blue-50 rounded flex items-center justify-center text-blue-600 border">
-                        <BookIcon size={14} />
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-11 bg-blue-50 rounded flex items-center justify-center text-blue-600 border">
+                          <BookIcon size={14} />
+                        </div>
+                        <div>
+                          <p className="text-[13px] font-bold text-slate-900 leading-tight">{book.title}</p>
+                          <p className="text-[11px] text-slate-500">by {book.author}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-[13px] font-bold text-slate-900 leading-tight">{book.title}</p>
-                        <p className="text-[11px] text-slate-500">by {book.author}</p>
+                    </td>
+
+                    <td className="px-6 py-4 text-[13px] text-slate-600 font-mono">{book.isbn}</td>
+
+                    <td className="px-6 py-4">
+                      <p className="text-[13px] font-semibold text-slate-700">{book.categoryName}</p>
+                      <p className="text-[11px] text-slate-400">{book.subjectName}</p>
+                    </td>
+
+                    <td className="px-6 py-4 text-[13px] text-slate-600">{book.branchName}</td>
+
+                    <td className="px-6 py-4 text-center">
+                      <div className="inline-flex flex-col items-center">
+                        <span className="text-[13px] font-bold text-slate-800">{book.totalCopies}</span>
+                        <div className="flex gap-2 text-[10px] text-slate-400 border-t mt-1 pt-1">
+                          <span className="text-emerald-600">A: {book.availableCopies}</span>
+                          <span className="text-amber-600">I: {book.issuedCopies}</span>
+                        </div>
                       </div>
-                    </div>
-                  </td>
+                    </td>
 
-                  <td className="px-6 py-4 text-[13px] text-slate-600 font-mono">{book.isbn}</td>
+                    <td className="px-6 py-4 text-center">
+                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${book.statusColor}`}>
+                        {book.status}
+                      </span>
+                    </td>
 
-                  <td className="px-6 py-4">
-                    <p className="text-[13px] font-semibold text-slate-700">{book.categoryName}</p>
-                    <p className="text-[11px] text-slate-400">{book.subjectName}</p>
-                  </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center justify-center gap-1">
+                        <button
+                          onClick={() => handleView(book)}
+                          className="p-2 rounded-lg hover:bg-gray-100 text-gray-600 transition"
+                        >
+                          <Eye size={14} />
+                        </button>
 
-                  <td className="px-6 py-4 text-[13px] text-slate-600">{book.branchName}</td>
+                        <button
+                          onClick={() => handleEdit(book)}
+                          className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition"
+                        >
+                          <Edit2 size={14} />
+                        </button>
 
-                  <td className="px-6 py-4 text-center">
-                    <div className="inline-flex flex-col items-center">
-                      <span className="text-[13px] font-bold text-slate-800">{book.totalCopies}</span>
-                      <div className="flex gap-2 text-[10px] text-slate-400 border-t mt-1 pt-1">
-                        <span className="text-emerald-600">A: {book.availableCopies}</span>
-                        <span className="text-amber-600">I: {book.issuedCopies}</span>
+                        <button
+                          onClick={() => handleDelete(book.book_id)}
+                          className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition"
+                        >
+                          <Trash2Icon size={14} />
+                        </button>
                       </div>
-                    </div>
-                  </td>
-
-                  <td className="px-6 py-4 text-center">
-                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${book.statusColor}`}>
-                      {book.status}
-                    </span>
-                  </td>
-
-                  <td className="px-6 py-4">
-                    <div className="flex items-center justify-center gap-1">
-                      <button
-                        onClick={() => handleView(book)}
-                        className="p-2 rounded-lg hover:bg-gray-100 text-gray-600 transition"
-                      >
-                        <Eye size={14} />
-                      </button>
-
-                      <button
-                        onClick={() => handleEdit(book)}
-                        className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition"
-                      >
-                        <Edit2 size={14} />
-                      </button>
-
-                      <button
-                        onClick={() => handleDelete(book.book_id)}
-                        className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition"
-                      >
-                        <Trash2Icon size={14} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Search, Plus, Eye, Edit2, Trash2 } from 'lucide-react';
 import Modal from '../../components/Modal';
 import { Input, Select, Button } from '../../components/FormComponents';
+import TableSkeleton from '../../components/TableSkeleton';
 import api from '../../api/axios';
+import { toast } from 'react-toastify';
 
 const Categories = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -12,6 +14,7 @@ const Categories = () => {
     const [categoryToDelete, setCategoryToDelete] = useState(null);
 
     const [categories, setCategories] = useState([]);
+    const [loading, setLoading] = useState(true);
 
     const [formData, setFormData] = useState({
         name: '',
@@ -24,6 +27,7 @@ const Categories = () => {
     }, []);
 
     const fetchCategories = async () => {
+        setLoading(true);
         try {
             const res = await api.get('/api/v1/admin/categories');
             // console.log("kordec",res);
@@ -38,6 +42,8 @@ const Categories = () => {
             }
         } catch (error) {
             console.error('Error fetching categories:', error);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -62,12 +68,14 @@ const Categories = () => {
             }
 
             if (res.data?.status === 200 || res.status === 200) {
+                toast.success(editingCategory ? 'Category updated successfully!' : 'Category added successfully!');
                 fetchCategories();
                 resetForm();
                 setIsModalOpen(false);
             }
 
         } catch (error) {
+            toast.error(editingCategory ? 'Failed to update category.' : 'Failed to add category.');
             console.error("Error saving category:", error);
         }
     };
@@ -86,6 +94,18 @@ const Categories = () => {
         setIsModalOpen(true);
     };
 
+    const handleDelete = async (id) => {
+        if (!confirm("Are you sure you want to delete this category?")) return;
+        try {
+            await api.delete(`/api/v1/admin/categories/${id}`);
+            toast.success('Category deleted successfully!');
+            fetchCategories();
+        } catch (error) {
+            toast.error('Failed to delete category.');
+            console.error('Error deleting category:', error);
+        }
+    };
+
     const handleDeleteConfirm = () => {
         setCategories(categories.filter(c => c.id !== categoryToDelete.id));
         setIsDeleteModalOpen(false);
@@ -96,9 +116,11 @@ const Categories = () => {
             // Added an empty object {} in case the server requires a body even for a PATCH toggle
             const res = await api.patch(`/api/v1/admin/categories/${id}/toggle`, {});
             if (res.data?.status === 200 || res.status === 200) {
+                toast.success('Status updated successfully!');
                 fetchCategories();
             }
         } catch (error) {
+            toast.error('Failed to update status.');
             console.error("Error toggling status:", error);
         }
     };
@@ -137,66 +159,70 @@ const Categories = () => {
                         </thead>
 
                         <tbody className="divide-y divide-slate-50">
-                            {categories.map((c, index) => (
-                                <tr key={c.id} className="hover:bg-slate-50/50 group">
+                            {loading ? (
+                                <TableSkeleton rows={5} columns={4} />
+                            ) : (
+                                categories.map((c, index) => (
+                                    <tr key={c.id} className="hover:bg-slate-50/50 group">
 
-                                    <td className="px-6 py-4 text-[13px]">{index + 1}</td>
+                                        <td className="px-6 py-4 text-[13px]">{index + 1}</td>
 
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-9 h-9 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600 font-bold text-[11px] border">
-                                                {c.name?.[0]}
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-9 h-9 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600 font-bold text-[11px] border">
+                                                    {c.name?.[0]}
+                                                </div>
+                                                <div>
+                                                    <p className="font-bold text-slate-900 text-[13px]">{c.name}</p>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <p className="font-bold text-slate-900 text-[13px]">{c.name}</p>
+                                        </td>
+
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-2">
+                                                {/* Simple Toggle Design */}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleToggleStatus(c.id)}
+                                                    className={`w-9 h-5 flex items-center rounded-full p-1 transition-colors ${c.status === 'Active' ? 'bg-emerald-500 justify-end' : 'bg-slate-300 justify-start'
+                                                        }`}
+                                                >
+                                                    <div className="w-3.5 h-3.5 bg-white rounded-full shadow-sm" />
+                                                </button>
+
+                                                <span className={`text-[11px] font-semibold ${c.status === 'Active' ? 'text-emerald-600' : 'text-slate-500'}`}>
+                                                    {c.status}
+                                                </span>
                                             </div>
-                                        </div>
-                                    </td>
-
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center gap-2">
-                                            {/* Simple Toggle Design */}
-                                            <button
-                                                type="button"
-                                                onClick={() => handleToggleStatus(c.id)}
-                                                className={`w-9 h-5 flex items-center rounded-full p-1 transition-colors ${c.status === 'Active' ? 'bg-emerald-500 justify-end' : 'bg-slate-300 justify-start'
-                                                    }`}
-                                            >
-                                                <div className="w-3.5 h-3.5 bg-white rounded-full shadow-sm" />
-                                            </button>
-
-                                            <span className={`text-[11px] font-semibold ${c.status === 'Active' ? 'text-emerald-600' : 'text-slate-500'}`}>
-                                                {c.status}
-                                            </span>
-                                        </div>
-                                    </td>
+                                        </td>
 
 
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center justify-end gap-1.5">
-                                            <button onClick={() => setViewingCategory(c)}
-                                                className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition">
-                                                <Eye size={14} />
-                                            </button>
-                                            {/* EDIT */}
-                                            <button
-                                                onClick={() => handleEditClick(c)}
-                                                className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition"
-                                            >
-                                                <Edit2 size={14} />
-                                            </button>
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center justify-end gap-1.5">
+                                                <button onClick={() => setViewingCategory(c)}
+                                                    className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition">
+                                                    <Eye size={14} />
+                                                </button>
+                                                {/* EDIT */}
+                                                <button
+                                                    onClick={() => handleEditClick(c)}
+                                                    className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition"
+                                                >
+                                                    <Edit2 size={14} />
+                                                </button>
 
-                                            {/* DELETE */}
-                                            <button
-                                                onClick={() => handleDelete(c.id)}
-                                                className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition"
-                                            >
-                                                <Trash2 size={14} />
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
+                                                {/* DELETE */}
+                                                <button
+                                                    onClick={() => handleDelete(c.id)}
+                                                    className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition"
+                                                >
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
                         </tbody>
                     </table>
                 </div>

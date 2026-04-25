@@ -2,13 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { Search, Plus, Edit2, Trash2Icon } from 'lucide-react';
 import Modal from '../../components/Modal';
 import { Input, Select, Button } from '../../components/FormComponents';
+import TableSkeleton from '../../components/TableSkeleton';
 import api from '../../api/axios';
+import { toast } from 'react-toastify';
 
 const Subjects = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [subjects, setSubjects] = useState([]);
     const [categories, setCategories] = useState([]);
     const [editingSubject, setEditingSubject] = useState(null);
+    const [loading, setLoading] = useState(true);
 
     const [formData, setFormData] = useState({
         name: '',
@@ -36,6 +39,7 @@ const Subjects = () => {
 
     // ✅ FETCH SUBJECTS
     const fetchSubjects = async () => {
+        setLoading(true);
         try {
             const res = await api.get('/api/v1/admin/categories/subjects');
 
@@ -52,6 +56,8 @@ const Subjects = () => {
             }
         } catch (error) {
             console.error('Error fetching subjects:', error);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -76,12 +82,14 @@ const Subjects = () => {
             }
 
             if (res.data?.status === 200 || res.status === 200) {
+                toast.success(editingSubject ? 'Subject updated successfully!' : 'Subject added successfully!');
                 fetchSubjects();
                 resetForm();
                 setIsModalOpen(false);
             }
 
         } catch (error) {
+            toast.error(editingSubject ? 'Failed to update subject.' : 'Failed to add subject.');
             console.error("Error saving subject:", error.response?.data || error);
         }
     };
@@ -103,10 +111,11 @@ const Subjects = () => {
 
         try {
             await api.delete(`/api/v1/admin/categories/subjects/${id}`);
-
+            toast.success('Subject deleted successfully!');
             fetchSubjects(); // 🔥 refresh table
 
         } catch (error) {
+            toast.error('Failed to delete subject.');
             console.error("Delete error:", error.response?.data || error);
         }
     };
@@ -115,9 +124,11 @@ const Subjects = () => {
         try {
             const res = await api.patch(`/api/v1/admin/categories/subjects/${id}/toggle`);
             if (res.data?.status === 200 || res.status === 200) {
+                toast.success('Status updated successfully!');
                 fetchSubjects();
             }
         } catch (error) {
+            toast.error('Failed to update status.');
             console.error("Error toggling status:", error);
         }
     };
@@ -166,55 +177,59 @@ const Subjects = () => {
                         </thead>
 
                         <tbody className="divide-y divide-slate-50">
-                            {subjects.map((s, index) => (
-                                <tr key={s.id} className="hover:bg-slate-50/50">
+                            {loading ? (
+                                <TableSkeleton rows={5} columns={5} />
+                            ) : (
+                                subjects.map((s, index) => (
+                                    <tr key={s.id} className="hover:bg-slate-50/50">
 
-                                    <td className="px-6 py-4 text-[13px] whitespace-nowrap">{index + 1}</td>
+                                        <td className="px-6 py-4 text-[13px] whitespace-nowrap">{index + 1}</td>
 
-                                    <td className="px-6 py-4 text-[13px] font-bold whitespace-nowrap">
-                                        {s.name}
-                                    </td>
+                                        <td className="px-6 py-4 text-[13px] font-bold whitespace-nowrap">
+                                            {s.name}
+                                        </td>
 
-                                    <td className="px-6 py-4 text-[13px] whitespace-nowrap">
-                                        {s.categoryName}
-                                    </td>
+                                        <td className="px-6 py-4 text-[13px] whitespace-nowrap">
+                                            {s.categoryName}
+                                        </td>
 
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="flex items-center gap-2">
-                                            {/* Simple Toggle Design */}
-                                            <button
-                                                type="button"
-                                                onClick={() => handleToggleStatus(s.id)}
-                                                className={`w-9 h-5 flex items-center rounded-full p-1 transition-colors ${s.status === 'Active' ? 'bg-emerald-500 justify-end' : 'bg-slate-300 justify-start'
-                                                    }`}
-                                            >
-                                                <div className="w-3.5 h-3.5 bg-white rounded-full shadow-sm" />
-                                            </button>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="flex items-center gap-2">
+                                                {/* Simple Toggle Design */}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleToggleStatus(s.id)}
+                                                    className={`w-9 h-5 flex items-center rounded-full p-1 transition-colors ${s.status === 'Active' ? 'bg-emerald-500 justify-end' : 'bg-slate-300 justify-start'
+                                                        }`}
+                                                >
+                                                    <div className="w-3.5 h-3.5 bg-white rounded-full shadow-sm" />
+                                                </button>
 
-                                            <span className={`text-[11px] font-semibold ${s.status === 'Active' ? 'text-emerald-600' : 'text-slate-500'}`}>
-                                                {s.status}
-                                            </span>
-                                        </div>
-                                    </td>
+                                                <span className={`text-[11px] font-semibold ${s.status === 'Active' ? 'text-emerald-600' : 'text-slate-500'}`}>
+                                                    {s.status}
+                                                </span>
+                                            </div>
+                                        </td>
 
-                                    <td className="px-6 py-4 text-right whitespace-nowrap">
-                                        <div className="flex justify-end gap-1.5">
-                                            <button onClick={() => handleEditClick(s)}
-                                                className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition"
-                                            >
-                                                <Edit2 size={14} />
-                                            </button>
-                                            <button
-                                                onClick={() => handleDelete(s.id)}
-                                                className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition"
-                                            >
-                                                <Trash2Icon size={14} />
-                                            </button>
-                                        </div>
-                                    </td>
+                                        <td className="px-6 py-4 text-right whitespace-nowrap">
+                                            <div className="flex justify-end gap-1.5">
+                                                <button onClick={() => handleEditClick(s)}
+                                                    className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition"
+                                                >
+                                                    <Edit2 size={14} />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDelete(s.id)}
+                                                    className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition"
+                                                >
+                                                    <Trash2Icon size={14} />
+                                                </button>
+                                            </div>
+                                        </td>
 
-                                </tr>
-                            ))}
+                                    </tr>
+                                ))
+                            )}
                         </tbody>
                     </table>
                 </div>

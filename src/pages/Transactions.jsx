@@ -1,16 +1,17 @@
 import React from 'react';
 import { ArrowLeftRight, Search, CheckCircle2, AlertTriangle, Clock } from 'lucide-react';
 import { Button } from '../components/FormComponents';
+import { toast } from 'react-toastify';
 
 const Transactions = () => {
   const handleIssue = (e) => {
     e.preventDefault();
-    alert("Book Issued Successfully!");
+    toast.success("Book Issued Successfully!");
   };
 
   const handleReturn = (e) => {
     e.preventDefault();
-    alert("Book Returned Successfully!");
+    toast.success("Book Returned Successfully!");
   };
 
   return (

@@ -8,6 +8,7 @@ import {
   Settings2
 } from 'lucide-react';
 import { Button, Select } from '../components/FormComponents';
+import { toast } from 'react-toastify';
 
 const Permissions = () => {
   const modules = [
@@ -38,7 +39,7 @@ const Permissions = () => {
   };
 
   const handleSave = () => {
-    alert(`Permissions for ${selectedRole} saved successfully!`);
+    toast.success(`Permissions for ${selectedRole} saved successfully!`);
   };
 
   const roles = [

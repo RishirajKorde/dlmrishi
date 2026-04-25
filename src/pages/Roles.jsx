@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import Modal from '../components/Modal';
 import { Input, Button, Select } from '../components/FormComponents';
+import { toast } from 'react-toastify';
 
 const Roles = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -39,6 +40,7 @@ const Roles = () => {
     e.preventDefault();
     if (editingRole) {
       setRoles(roles.map(r => r.id === editingRole.id ? { ...r, ...formData } : r));
+      toast.success('Role updated successfully!');
     } else {
       const newRole = {
         id: Date.now(),
@@ -47,6 +49,7 @@ const Roles = () => {
         created: new Date().toISOString().split('T')[0]
       };
       setRoles([newRole, ...roles]);
+      toast.success('Role created successfully!');
     }
     setIsModalOpen(false);
   };
@@ -54,6 +57,7 @@ const Roles = () => {
   const deleteRole = (id) => {
     if (window.confirm('Are you sure you want to delete this role?')) {
       setRoles(roles.filter(r => r.id !== id));
+      toast.success('Role deleted successfully!');
     }
   };
 
@@ -61,6 +65,7 @@ const Roles = () => {
     setRoles(roles.map(r =>
       r.id === id ? { ...r, status: r.status === 'Active' ? 'Deactive' : 'Active' } : r
     ));
+    toast.success('Status updated successfully!');
   };
 
   return (

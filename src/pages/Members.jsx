@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Search, Plus, Edit2, Trash2Icon, Eye } from 'lucide-react';
 import Modal from '../components/Modal';
 import { Input, Select, Button } from '../components/FormComponents';
+import TableSkeleton from '../components/TableSkeleton';
 import api from '../api/axios';
+import { toast } from 'react-toastify';
 
 const Members = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -12,6 +14,7 @@ const Members = () => {
   const [editingMember, setEditingMember] = useState(null);
   const [viewingMember, setViewingMember] = useState(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -37,6 +40,7 @@ const Members = () => {
   // FETCH MEMBERS
   // =========================
   const fetchMembers = async () => {
+    setLoading(true);
     try {
       const res = await api.get('/api/v1/branch-admin/librarians/members');
 
@@ -69,6 +73,8 @@ const Members = () => {
       }
     } catch (error) {
       console.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -76,9 +82,11 @@ const Members = () => {
     try {
       const res = await api.patch(`/api/v1/branch-admin/librarians/members/${id}/toggle-status`, {});
       if (res.data?.status === 200 || res.status === 200) {
+        toast.success('Status updated successfully!');
         fetchMembers();
       }
     } catch (error) {
+      toast.error('Failed to update status.');
       console.error("Error toggling status:", error);
     }
   };
@@ -157,12 +165,14 @@ const Members = () => {
 
       // ✅ NOW THIS WILL WORK
       if (res.data?.status === 200 || res.status === 200) {
+        toast.success(editingMember ? 'Member updated successfully!' : 'Member added successfully!');
         await fetchMembers();   // 🔥 important
         resetForm();
         setIsModalOpen(false);
       }
 
     } catch (error) {
+      toast.error(editingMember ? 'Failed to update member.' : 'Failed to add member.');
       console.error(error);
     }
   };
@@ -190,8 +200,10 @@ const Members = () => {
 
     try {
       await api.delete(`/api/v1/branch-admin/librarians/members/${id}`);
+      toast.success('Member deleted successfully!');
       fetchMembers();
     } catch (error) {
+      toast.error('Failed to delete member.');
       console.error(error);
     }
   };
@@ -251,85 +263,89 @@ const Members = () => {
             </thead>
 
             <tbody className="divide-y divide-slate-50">
-              {members.map((m, index) => (
-                <tr key={m.id} className="hover:bg-slate-50/50">
+              {loading ? (
+                <TableSkeleton rows={5} columns={9} />
+              ) : (
+                members.map((m, index) => (
+                  <tr key={m.id} className="hover:bg-slate-50/50">
 
-                  <td className="px-6 py-4 text-[13px]">{index + 1}</td>
+                    <td className="px-6 py-4 text-[13px]">{index + 1}</td>
 
-                  <td className="px-6 py-4 text-[13px] font-bold">
-                    {m.name}
-                  </td>
+                    <td className="px-6 py-4 text-[13px] font-bold">
+                      {m.name}
+                    </td>
 
-                  <td className="px-6 py-4 text-[13px] font-medium text-slate-500">
-                    {m.membershipId}
-                  </td>
+                    <td className="px-6 py-4 text-[13px] font-medium text-slate-500">
+                      {m.membershipId}
+                    </td>
 
-                  <td className="px-6 py-4 text-[13px]">
-                    {m.mobile}
-                  </td>
+                    <td className="px-6 py-4 text-[13px]">
+                      {m.mobile}
+                    </td>
 
-                  <td className="px-6 py-4 text-[13px]">
-                    {m.branchName}
-                  </td>
+                    <td className="px-6 py-4 text-[13px]">
+                      {m.branchName}
+                    </td>
 
-                  <td className="px-6 py-4">
-                    <span className="px-2 py-1 bg-blue-50 text-blue-600 rounded-md text-[11px] font-bold">
-                      {m.membershipTypeName}
-                    </span>
-                  </td>
-
-                  <td className="px-6 py-4 text-[13px]">
-                    {m.validityMonths} Months
-                  </td>
-
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      {/* Simple Toggle Design */}
-                      <button
-                        type="button"
-                        onClick={() => handleToggleStatus(m.id)}
-                        className={`w-9 h-5 flex items-center rounded-full p-1 transition-colors ${m.status === 'Active' ? 'bg-emerald-500 justify-end' : 'bg-slate-300 justify-start'
-                          }`}
-                      >
-                        <div className="w-3.5 h-3.5 bg-white rounded-full shadow-sm" />
-                      </button>
-
-                      <span className={`text-[11px] font-semibold ${m.status === 'Active' ? 'text-emerald-600' : 'text-slate-500'}`}>
-                        {m.status}
+                    <td className="px-6 py-4">
+                      <span className="px-2 py-1 bg-blue-50 text-blue-600 rounded-md text-[11px] font-bold">
+                        {m.membershipTypeName}
                       </span>
-                    </div>
-                  </td>
+                    </td>
 
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex justify-end gap-1.5">
-                      {/* 👁 VIEW */}
-                      <button
-                        onClick={() => {
-                          setViewingMember(m);
-                          setIsViewModalOpen(true);
-                        }}
-                        className="p-2 rounded-lg hover:bg-gray-100 text-gray-600 transition"
-                      >
-                        <Eye size={14} />
-                      </button>
-                      <button
-                        onClick={() => handleEditClick(m)}
-                        className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition"
-                      >
-                        <Edit2 size={14} />
-                      </button>
+                    <td className="px-6 py-4 text-[13px]">
+                      {m.validityMonths} Months
+                    </td>
 
-                      <button
-                        onClick={() => handleDelete(m.id)}
-                        className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition"
-                      >
-                        <Trash2Icon size={16} />
-                      </button>
-                    </div>
-                  </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        {/* Simple Toggle Design */}
+                        <button
+                          type="button"
+                          onClick={() => handleToggleStatus(m.id)}
+                          className={`w-9 h-5 flex items-center rounded-full p-1 transition-colors ${m.status === 'Active' ? 'bg-emerald-500 justify-end' : 'bg-slate-300 justify-start'
+                            }`}
+                        >
+                          <div className="w-3.5 h-3.5 bg-white rounded-full shadow-sm" />
+                        </button>
 
-                </tr>
-              ))}
+                        <span className={`text-[11px] font-semibold ${m.status === 'Active' ? 'text-emerald-600' : 'text-slate-500'}`}>
+                          {m.status}
+                        </span>
+                      </div>
+                    </td>
+
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex justify-end gap-1.5">
+                        {/* 👁 VIEW */}
+                        <button
+                          onClick={() => {
+                            setViewingMember(m);
+                            setIsViewModalOpen(true);
+                          }}
+                          className="p-2 rounded-lg hover:bg-gray-100 text-gray-600 transition"
+                        >
+                          <Eye size={14} />
+                        </button>
+                        <button
+                          onClick={() => handleEditClick(m)}
+                          className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition"
+                        >
+                          <Edit2 size={14} />
+                        </button>
+
+                        <button
+                          onClick={() => handleDelete(m.id)}
+                          className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition"
+                        >
+                          <Trash2Icon size={16} />
+                        </button>
+                      </div>
+                    </td>
+
+                  </tr>
+                ))
+              )}
             </tbody>
 
           </table>
@@ -373,7 +389,15 @@ const Members = () => {
           <Select
             label="Membership Type"
             value={formData.memberShipTypeId}
-            onChange={e => setFormData({ ...formData, memberShipTypeId: e.target.value })}
+            onChange={e => {
+              const typeId = e.target.value;
+              const selectedType = membershipTypes.find(t => String(t.id) === String(typeId));
+              setFormData({ 
+                ...formData, 
+                memberShipTypeId: typeId,
+                validityMonths: selectedType ? selectedType.validityMonths : ''
+              });
+            }}
             options={[
               { label: 'Select Type', value: '' },
               ...membershipTypes.map(t => ({
@@ -383,15 +407,11 @@ const Members = () => {
             ]}
           />
 
-          <Select
-            label="Validity"
-            value={formData.validityMonths}
-            onChange={e => setFormData({ ...formData, validityMonths: e.target.value })}
-            options={[
-              { label: '3 Months', value: 3 },
-              { label: '6 Months', value: 6 },
-              { label: '12 Months', value: 12 }
-            ]}
+          <Input 
+            label="Validity (Months)" 
+            value={formData.validityMonths} 
+            readOnly 
+            placeholder="Selected Type Validity"
           />
 
           <Input label="Address"

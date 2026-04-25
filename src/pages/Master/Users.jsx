@@ -2,13 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { Search, Plus, Edit2, Trash2, Eye } from 'lucide-react';
 import Modal from '../../components/Modal';
 import { Input, Select, Button } from '../../components/FormComponents';
+import TableSkeleton from '../../components/TableSkeleton';
 import api from '../../api/axios';
+import { toast } from 'react-toastify';
 
 const Users = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [users, setUsers] = useState([]);
     const [branches, setBranches] = useState([]);
     const [editingUser, setEditingUser] = useState(null);
+    const [loading, setLoading] = useState(true);
     const [viewingUser, setViewingUser] = useState(null);
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
     const [formData, setFormData] = useState({
@@ -65,6 +68,8 @@ const Users = () => {
         } catch (err) {
             console.error(err);
             setUsers([]);
+        } finally {
+            setLoading(false);
         }
     };
     const fetchBranches = async () => {
@@ -100,12 +105,14 @@ const Users = () => {
             }
 
             if (res.data?.status === 200 || res.status === 200) {
+                toast.success(editingUser ? 'User updated successfully!' : 'User added successfully!');
                 fetchUsers();
                 resetForm();
                 setIsModalOpen(false);
             }
 
         } catch (err) {
+            toast.error(editingUser ? 'Failed to update user.' : 'Failed to add user.');
             console.error(err);
         }
     };
@@ -127,8 +134,10 @@ const Users = () => {
 
         try {
             await api.delete(`/api/v1/branch-admin/librarians/${id}`);
+            toast.success('User deleted successfully!');
             fetchUsers();
         } catch (err) {
+            toast.error('Failed to delete user.');
             console.error(err);
         }
     };
@@ -181,57 +190,61 @@ const Users = () => {
                         </thead>
 
                         <tbody className="divide-y divide-slate-50">
-                            {users.map((u, index) => (
-                                <tr key={u.id} className="hover:bg-slate-50/50">
+                            {loading ? (
+                                <TableSkeleton rows={5} columns={6} />
+                            ) : (
+                                users.map((u, index) => (
+                                    <tr key={u.id} className="hover:bg-slate-50/50">
 
-                                    <td className="px-6 py-4 text-[13px] whitespace-nowrap">{index + 1}</td>
+                                        <td className="px-6 py-4 text-[13px] whitespace-nowrap">{index + 1}</td>
 
-                                    <td className="px-6 py-4 text-[13px] font-bold whitespace-nowrap">
-                                        {u.name}
-                                    </td>
+                                        <td className="px-6 py-4 text-[13px] font-bold whitespace-nowrap">
+                                            {u.name}
+                                        </td>
 
-                                    <td className="px-6 py-4 text-[13px] whitespace-nowrap">
-                                        {u.email}
-                                    </td>
+                                        <td className="px-6 py-4 text-[13px] whitespace-nowrap">
+                                            {u.email}
+                                        </td>
 
-                                    <td className="px-6 py-4 text-[13px] whitespace-nowrap">
-                                        {u.mobile}
-                                    </td>
+                                        <td className="px-6 py-4 text-[13px] whitespace-nowrap">
+                                            {u.mobile}
+                                        </td>
 
-                                    <td className="px-6 py-4 text-[13px] whitespace-nowrap">
-                                        {u.branchName || u.branch?.branchName || 'N/A'}
-                                    </td>
+                                        <td className="px-6 py-4 text-[13px] whitespace-nowrap">
+                                            {u.branchName || u.branch?.branchName || 'N/A'}
+                                        </td>
 
-                                    <td className="px-6 py-4 text-right whitespace-nowrap">
-                                        <div className="flex justify-end gap-1.5">
-                                            <button
-                                                onClick={() => {
-                                                    setViewingUser(u);
-                                                    setIsViewModalOpen(true);
-                                                }}
-                                                className="p-2 rounded-lg hover:bg-gray-100 text-gray-600 transition"
-                                            >
-                                                <Eye size={14} />
-                                            </button>
+                                        <td className="px-6 py-4 text-right whitespace-nowrap">
+                                            <div className="flex justify-end gap-1.5">
+                                                <button
+                                                    onClick={() => {
+                                                        setViewingUser(u);
+                                                        setIsViewModalOpen(true);
+                                                    }}
+                                                    className="p-2 rounded-lg hover:bg-gray-100 text-gray-600 transition"
+                                                >
+                                                    <Eye size={14} />
+                                                </button>
 
-                                            <button
-                                                onClick={() => handleEditClick(u)}
-                                                className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition"
-                                            >
-                                                <Edit2 size={14} />
-                                            </button>
+                                                <button
+                                                    onClick={() => handleEditClick(u)}
+                                                    className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition"
+                                                >
+                                                    <Edit2 size={14} />
+                                                </button>
 
-                                            <button
-                                                onClick={() => handleDelete(u.id)}
-                                                className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition"
-                                            >
-                                                <Trash2 size={14} />
-                                            </button>
-                                        </div>
-                                    </td>
+                                                <button
+                                                    onClick={() => handleDelete(u.id)}
+                                                    className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition"
+                                                >
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            </div>
+                                        </td>
 
-                                </tr>
-                            ))}
+                                    </tr>
+                                ))
+                            )}
                         </tbody>
 
                     </table>
