@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Lock, Mail, Eye, EyeOff, BookOpen } from 'lucide-react';
 import { Input, Button } from '../components/FormComponents';
 import api from '../api/axios';
+import logo from '../assets/logo/mainLogo.png';
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -27,7 +28,7 @@ const Login = () => {
                 const { token, name, role } = response.data.data;
                 localStorage.setItem('token', token);
                 localStorage.setItem('user', JSON.stringify({ name, role }));
-                
+
                 // Redirect to dashboard
                 navigate('/dashboard');
                 window.location.reload(); // Refresh to update layout/state if needed
@@ -53,8 +54,12 @@ const Login = () => {
             <div className="w-full max-w-md z-10">
                 {/* Logo Section */}
                 <div className="text-center mb-8">
-                    <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-2xl shadow-lg shadow-blue-200 mb-4 animate-bounce">
-                        <BookOpen size={32} className="text-white" />
+                    <div className="inline-flex items-center justify-center w-20 h-20 bg-white-600 rounded-2xl shadow-lg shadow-blue-200 mb-4 animate-bounce p-2">
+                        <img
+                            src={logo}
+                            alt="Logo"
+                            className="w-full h-full object-contain"
+                        />
                     </div>
                     <h1 className="text-2xl font-black text-slate-900 tracking-tight">DLMS</h1>
                     <p className="text-slate-500 text-sm mt-1">Digital Library Management System</p>
@@ -114,8 +119,8 @@ const Login = () => {
                             <a href="#" className="font-bold text-blue-600 hover:text-blue-700 transition-colors">Forgot password?</a>
                         </div>
 
-                        <Button 
-                            type="submit" 
+                        <Button
+                            type="submit"
                             className="w-full py-3 h-auto text-[14px] font-bold shadow-lg shadow-blue-100 flex items-center justify-center gap-2"
                             disabled={isLoading}
                         >

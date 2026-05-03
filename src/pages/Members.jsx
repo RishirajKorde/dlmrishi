@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Edit2, Trash2Icon, Eye } from 'lucide-react';
+import { Search, Plus, Edit2, Trash2Icon, Eye, BookOpen } from 'lucide-react';
 import Modal from '../components/Modal';
 import { Input, Select, Button } from '../components/FormComponents';
 import TableSkeleton from '../components/TableSkeleton';
@@ -26,6 +26,11 @@ const Members = () => {
     memberShipTypeId: '',
     photo: null
   });
+
+  const [issuedBooks, setIssuedBooks] = useState([]);
+  const [isBooksModalOpen, setIsBooksModalOpen] = useState(false);
+  const [loadingBooks, setLoadingBooks] = useState(false);
+  const [selectedMemberName, setSelectedMemberName] = useState('');
 
   // =========================
   // LOAD
@@ -208,6 +213,23 @@ const Members = () => {
     }
   };
 
+  const handleShowIssuedBooks = async (member) => {
+    setSelectedMemberName(member.name);
+    setLoadingBooks(true);
+    setIsBooksModalOpen(true);
+    try {
+      const res = await api.get(`/api/v1/admin/books/member/${member.id}`);
+      if (res.data?.status === 200) {
+        setIssuedBooks(res.data.data || []);
+      }
+    } catch (error) {
+      toast.error('Failed to fetch issued books.');
+      console.error(error);
+    } finally {
+      setLoadingBooks(false);
+    }
+  };
+
   const resetForm = () => {
     setFormData({
       name: '',
@@ -339,6 +361,14 @@ const Members = () => {
                           className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition"
                         >
                           <Trash2Icon size={16} />
+                        </button>
+
+                        <button
+                          onClick={() => handleShowIssuedBooks(m)}
+                          className="p-2 rounded-lg hover:bg-orange-50 text-orange-600 transition"
+                          title="View Issued Books"
+                        >
+                          <BookOpen size={14} />
                         </button>
                       </div>
                     </td>
@@ -524,6 +554,57 @@ const Members = () => {
 
           </div>
         )}
+      </Modal>
+
+      {/* Issued Books Modal */}
+      <Modal
+        isOpen={isBooksModalOpen}
+        onClose={() => setIsBooksModalOpen(false)}
+        title={`Issued Books - ${selectedMemberName}`}
+      >
+        <div className="space-y-4">
+          {loadingBooks ? (
+            <div className="flex justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+            </div>
+          ) : issuedBooks.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-100">
+                    <th className="px-4 py-2 text-[10px] uppercase font-bold text-slate-500">Book</th>
+                    <th className="px-4 py-2 text-[10px] uppercase font-bold text-slate-500">Issue Date</th>
+                    <th className="px-4 py-2 text-[10px] uppercase font-bold text-slate-500">Due Date</th>
+                    <th className="px-4 py-2 text-[10px] uppercase font-bold text-slate-500">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {issuedBooks.map((book) => (
+                    <tr key={book.transactionId} className="hover:bg-slate-50/50">
+                      <td className="px-4 py-3">
+                        <p className="text-[13px] font-bold text-slate-700">{book.bookTitle}</p>
+                        <p className="text-[11px] text-slate-400">ISBN: {book.isbn}</p>
+                      </td>
+                      <td className="px-4 py-3 text-[12px] text-slate-600">{book.issueDate}</td>
+                      <td className="px-4 py-3 text-[12px] text-slate-600">{book.dueDate}</td>
+                      <td className="px-4 py-3">
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${book.status === 'ISSUED' ? 'bg-orange-50 text-orange-600' : 'bg-green-50 text-green-600'
+                          }`}>
+                          {book.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="text-center py-8 text-slate-500">
+              <BookOpen size={48} className="mx-auto mb-3 opacity-20" />
+              <p>No books currently issued to this member.</p>
+            </div>
+          )}
+        </div>
       </Modal>
     </div>
   );

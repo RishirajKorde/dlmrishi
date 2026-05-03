@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Filter, MoreVertical, Book as BookIcon, Edit2, Trash2Icon, Eye } from 'lucide-react';
+import { Search, Plus, Filter, MoreVertical, Book as BookIcon, Edit2, Trash2Icon, Eye, Users } from 'lucide-react';
 import Modal from '../components/Modal';
 import { Input, Select, Button } from '../components/FormComponents';
 import TableSkeleton from '../components/TableSkeleton';
@@ -18,6 +18,10 @@ const Catalogue = () => {
   const [branches, setBranches] = useState([]);
   const [viewData, setViewData] = useState(null);
   const [isViewOpen, setIsViewOpen] = useState(false);
+  const [isMembersModalOpen, setIsMembersModalOpen] = useState(false);
+  const [bookMembers, setBookMembers] = useState([]);
+  const [membersLoading, setMembersLoading] = useState(false);
+  const [selectedBookTitle, setSelectedBookTitle] = useState('');
   const [isEditMode, setIsEditMode] = useState(false);
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
@@ -268,6 +272,23 @@ const Catalogue = () => {
       console.error("Delete error", err);
     }
   };
+
+  const handleShowMembers = async (book) => {
+    setSelectedBookTitle(book.title);
+    setIsMembersModalOpen(true);
+    setMembersLoading(true);
+    try {
+      const res = await api.get(`/api/v1/admin/books/${book.book_id}/members`);
+      // Handle both { data: [...] } and { data: { data: [...] } } or direct array
+      const members = res.data.data || res.data || [];
+      setBookMembers(Array.isArray(members) ? members : [members]);
+    } catch (err) {
+      console.error("Error fetching book members:", err);
+      toast.error("Failed to load members.");
+    } finally {
+      setMembersLoading(false);
+    }
+  };
   // ================= UI =================
 
   return (
@@ -364,13 +385,23 @@ const Catalogue = () => {
                         <button
                           onClick={() => handleView(book)}
                           className="p-2 rounded-lg hover:bg-gray-100 text-gray-600 transition"
+                          title="View Details"
                         >
                           <Eye size={14} />
                         </button>
 
                         <button
+                          onClick={() => handleShowMembers(book)}
+                          className="p-2 rounded-lg hover:bg-emerald-50 text-emerald-600 transition"
+                          title="View Members"
+                        >
+                          <Users size={14} />
+                        </button>
+
+                        <button
                           onClick={() => handleEdit(book)}
                           className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition"
+                          title="Edit Book"
                         >
                           <Edit2 size={14} />
                         </button>
@@ -378,6 +409,7 @@ const Catalogue = () => {
                         <button
                           onClick={() => handleDelete(book.book_id)}
                           className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition"
+                          title="Delete Book"
                         >
                           <Trash2Icon size={14} />
                         </button>
@@ -475,68 +507,64 @@ const Catalogue = () => {
 
 
       <Modal
-        isOpen={isViewOpen}
-        onClose={() => setIsViewOpen(false)}
-        title="Book Details"
+        isOpen={isMembersModalOpen}
+        onClose={() => setIsMembersModalOpen(false)}
+        title={`Members with "${selectedBookTitle}"`}
       >
-        {viewData && (
-          <div className="space-y-4 text-[13px]">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-slate-400 block mb-1">Title</label>
-                <p className="font-bold">{viewData.title}</p>
-              </div>
-              <div>
-                <label className="text-slate-400 block mb-1">Author</label>
-                <p className="font-bold">{viewData.author}</p>
-              </div>
+        <div className="space-y-4">
+          {membersLoading ? (
+            <div className="flex flex-col items-center justify-center py-12 space-y-4">
+              <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+              <p className="text-slate-500 text-sm">Fetching members...</p>
             </div>
+          ) : bookMembers.length > 0 ? (
+            <div className="border border-slate-100 rounded-xl overflow-hidden">
+              <table className="w-full text-left">
+                <thead className="bg-slate-50 text-[10px] uppercase font-bold text-slate-500">
+                  <tr>
+                    <th className="px-4 py-3">Sr No</th>
+                    <th className="px-4 py-3">Member</th>
+                    <th className="px-4 py-3">Issue Date</th>
+                    <th className="px-4 py-3">Due Date</th>
+                    <th className="px-4 py-3 text-center">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {bookMembers.map((item, idx) => (
+                    <tr key={idx} className="hover:bg-slate-50/50">
+                      <td className="px-4 py-3 text-[13px]">{idx + 1}</td>
+                      <td className="px-4 py-3">
+                        <div className="flex flex-col">
+                          <span className="text-[13px] font-bold text-slate-900">{item.memberName}</span>
+                          <span className="text-[11px] text-slate-500">ID: {item.memberId}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-[13px] text-slate-600">{item.issueDate}</td>
+                      <td className="px-4 py-3 text-[13px] text-slate-600">{item.dueDate}</td>
+                      <td className="px-4 py-3 text-center">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${item.status === 'ISSUED' ? 'bg-amber-50 text-amber-600 border border-amber-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'
+                          }`}>
+                          {item.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center text-slate-300 mb-3">
+                <Users size={24} />
+              </div>
+              <p className="text-slate-500 font-medium">No members currently have this book.</p>
+            </div>
+          )}
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-slate-400 block mb-1">ISBN</label>
-                <p className="font-bold font-mono">{viewData.isbn}</p>
-              </div>
-              <div>
-                <label className="text-slate-400 block mb-1">Branch</label>
-                <p className="font-bold">{viewData.branchName}</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-slate-400 block mb-1">Category</label>
-                <p className="font-bold">{viewData.categoryName}</p>
-              </div>
-              <div>
-                <label className="text-slate-400 block mb-1">Subject</label>
-                <p className="font-bold">{viewData.subjectName}</p>
-              </div>
-            </div>
-
-            <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 grid grid-cols-3 gap-2 text-center">
-              <div>
-                <label className="text-slate-400 block text-[10px] uppercase font-bold">Total</label>
-                <p className="font-black text-slate-800 text-lg">{viewData.totalCopies}</p>
-              </div>
-              <div>
-                <label className="text-emerald-500 block text-[10px] uppercase font-bold">Available</label>
-                <p className="font-black text-emerald-600 text-lg">{viewData.availableCopies}</p>
-              </div>
-              <div>
-                <label className="text-amber-500 block text-[10px] uppercase font-bold">Issued</label>
-                <p className="font-black text-amber-600 text-lg">{viewData.issuedCopies}</p>
-              </div>
-            </div>
-
-            <div>
-              <label className="text-slate-400 block mb-1">Current Status</label>
-              <span className={`px-3 py-1 rounded-full text-[11px] font-bold border ${viewData.statusColor}`}>
-                {viewData.status}
-              </span>
-            </div>
-          </div>
-        )}
+          <Button variant="secondary" className="w-full" onClick={() => setIsMembersModalOpen(false)}>
+            Close
+          </Button>
+        </div>
       </Modal>
     </div>
   );

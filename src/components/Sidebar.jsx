@@ -20,7 +20,7 @@ import {
   Eye,
   UserRoundKey
 } from 'lucide-react';
-
+import logo from '../assets/logo/mainLogo.png';
 const SidebarLink = ({ to, icon: Icon, label, active, isCollapsed, isSubItem = false }) => (
   <Link
     to={to}
@@ -65,7 +65,7 @@ const Sidebar = ({ isCollapsed, setCollapsed, isMobile, isOpen, onClose }) => {
   const masterItems = [
     // { to: '/roles', icon: UserRoundKey, label: 'Roles' },
     // { to: '/permissions', icon: Eye, label: 'Permissions' },
-        { to: '/Categories', icon: GitBranchIcon, label: 'Categories' },
+    { to: '/Categories', icon: GitBranchIcon, label: 'Categories' },
     { to: '/Subjects', icon: User2Icon, label: 'Subjects' },
 
     { to: '/branch', icon: GitBranchIcon, label: 'Branch' },
@@ -94,8 +94,12 @@ const Sidebar = ({ isCollapsed, setCollapsed, isMobile, isOpen, onClose }) => {
         <div className={`flex flex-col h-full transition-all duration-300 ${isCollapsed && !isMobile ? 'p-3' : 'p-6'}`}>
           <div className={`flex items-center ${isCollapsed && !isMobile ? 'justify-center' : 'justify-between'} mb-10`}>
             <div className={`flex items-center ${isCollapsed && !isMobile ? 'justify-center' : 'gap-3'}`}>
-              <div className="min-w-[40px] h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-200 transition-transform duration-300 hover:scale-105 active:scale-95">
-                <Library size={24} />
+              <div className="min-w-[40px] h-10 flex items-center justify-center transition-transform duration-300 hover:scale-105 active:scale-95">
+                <img
+                  src={logo}
+                  alt="Logo"
+                  className="h-10 w-10 object-contain rounded-xl shadow-md"
+                />
               </div>
               {(!isCollapsed || isMobile) && (
                 <div className="transition-all duration-300 overflow-hidden whitespace-nowrap">
@@ -178,11 +182,11 @@ const Sidebar = ({ isCollapsed, setCollapsed, isMobile, isOpen, onClose }) => {
                 {!isCollapsed && <span className="font-medium text-[13px]"></span>}
               </button>
             )}
-            <button className={`flex items-center rounded-xl transition-all duration-300 group ${isCollapsed && !isMobile ? 'justify-center p-3' : 'gap-3 px-4 py-3 w-full'
+            {/* <button className={`flex items-center rounded-xl transition-all duration-300 group ${isCollapsed && !isMobile ? 'justify-center p-3' : 'gap-3 px-4 py-3 w-full'
               } text-slate-400 hover:text-red-600 hover:bg-red-50`}>
               <LogOut size={20} className="group-hover:translate-x-1 transition-transform flex-shrink-0" />
               {(!isCollapsed || isMobile) && <span className="font-medium text-[13px] text-left">Logout</span>}
-            </button>
+            </button> */}
           </div>
         </div>
       </aside>
