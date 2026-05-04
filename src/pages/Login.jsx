@@ -24,10 +24,12 @@ const Login = () => {
                 password
             });
 
+
+
             if (response.data?.status === 200) {
-                const { token, name, role } = response.data.data;
+                const { token, name, role, email, branch, userId } = response.data.data;
                 localStorage.setItem('token', token);
-                localStorage.setItem('user', JSON.stringify({ name, role }));
+                localStorage.setItem('user', JSON.stringify({ name, role, email, branch, userId }));
 
                 // Redirect to dashboard
                 navigate('/dashboard');

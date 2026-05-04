@@ -18,8 +18,10 @@ import {
   GitBranchIcon,
   User2Icon,
   Eye,
-  UserRoundKey
+  UserRoundKey,
+  Receipt
 } from 'lucide-react';
+
 import logo from '../assets/logo/mainLogo.png';
 const SidebarLink = ({ to, icon: Icon, label, active, isCollapsed, isSubItem = false }) => (
   <Link
@@ -57,7 +59,9 @@ const Sidebar = ({ isCollapsed, setCollapsed, isMobile, isOpen, onClose }) => {
     { to: '/catalogue', icon: BookOpen, label: 'Books' },
     { to: '/members', icon: Users, label: 'Members' },
     { to: '/transactions', icon: ArrowLeftRight, label: 'Transactions' },
+    { to: '/fines', icon: Receipt, label: 'Fines' },
     // { to: '/library', icon: Library, label: 'Digital Library' },
+
     // { to: '/search', icon: Search, label: 'Public Portal' },
     // { to: '/reports', icon: BarChart3, label: 'Reports' },
   ];
@@ -74,10 +78,10 @@ const Sidebar = ({ isCollapsed, setCollapsed, isMobile, isOpen, onClose }) => {
   ];
 
   const sidebarClasses = `
-    bg-white border-r border-slate-200 flex flex-col transition-all duration-300 h-screen overflow-x-hidden flex-shrink-0
+   bg-white border-r border-slate-200 flex flex-col transition-all duration-300 h-screen overflow-x-hidden flex-shrink-0
     ${isMobile ? (isOpen ? 'translate-x-0' : '-translate-x-full') : ''}
     ${isMobile ? 'fixed z-50' : 'relative'}
-    ${!isMobile && isCollapsed ? 'w-20' : 'w-72'}
+    ${!isMobile && isCollapsed ? 'w-20' : 'w-60'}
   `;
 
   return (
@@ -91,7 +95,7 @@ const Sidebar = ({ isCollapsed, setCollapsed, isMobile, isOpen, onClose }) => {
       )}
 
       <aside className={sidebarClasses}>
-        <div className={`flex flex-col h-full transition-all duration-300 ${isCollapsed && !isMobile ? 'p-3' : 'p-6'}`}>
+        <div className={`flex flex-col h-full transition-all duration-300 ${isCollapsed && !isMobile ? 'p-3' : 'px-4 py-2'}`}>
           <div className={`flex items-center ${isCollapsed && !isMobile ? 'justify-center' : 'justify-between'} mb-10`}>
             <div className={`flex items-center ${isCollapsed && !isMobile ? 'justify-center' : 'gap-3'}`}>
               <div className="min-w-[40px] h-10 flex items-center justify-center transition-transform duration-300 hover:scale-105 active:scale-95">
