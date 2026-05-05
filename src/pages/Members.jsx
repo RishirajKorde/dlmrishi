@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Edit2, Trash2Icon, Eye, BookOpen } from 'lucide-react';
+import { Search, Plus, Edit2, Trash2Icon, Eye, BookOpen, Clock, Users } from 'lucide-react';
 import Modal from '../components/Modal';
 import { Input, Select, Button } from '../components/FormComponents';
 import TableSkeleton from '../components/TableSkeleton';
@@ -15,6 +15,7 @@ const Members = () => {
   const [viewingMember, setViewingMember] = useState(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isExpiredView, setIsExpiredView] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -44,10 +45,13 @@ const Members = () => {
   // =========================
   // FETCH MEMBERS
   // =========================
-  const fetchMembers = async (showSkeleton = true) => {
+  const fetchMembers = async (showSkeleton = true, useExpiredEndpoint = isExpiredView) => {
     if (showSkeleton) setLoading(true);
     try {
-      const res = await api.get('/api/v1/branch-admin/librarians/members');
+      const endpoint = useExpiredEndpoint 
+        ? '/api/v1/branch-admin/librarians/members/expired' 
+        : '/api/v1/branch-admin/librarians/members';
+      const res = await api.get(endpoint);
 
       if (res.data?.status === 200) {
         let list = res.data.data;
@@ -259,10 +263,25 @@ const Members = () => {
           />
         </div>
 
-        <Button onClick={() => { resetForm(); setIsModalOpen(true); }} className="flex items-center gap-2">
-          <Plus size={18} />
-          <span>Add</span>
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant={isExpiredView ? "primary" : "secondary"}
+            onClick={() => {
+              const newMode = !isExpiredView;
+              setIsExpiredView(newMode);
+              fetchMembers(true, newMode);
+            }}
+            className={`flex items-center gap-2 ${!isExpiredView ? 'text-orange-600 border-orange-200 hover:bg-orange-50' : ''}`}
+          >
+            {isExpiredView ? <Users size={18} /> : <Clock size={18} />}
+            <span>{isExpiredView ? "Show All" : "Expired Members"}</span>
+          </Button>
+
+          <Button onClick={() => { resetForm(); setIsModalOpen(true); }} className="flex items-center gap-2">
+            <Plus size={18} />
+            <span>Add</span>
+          </Button>
+        </div>
       </div>
 
       {/* TABLE (UNCHANGED STYLE) */}
