@@ -29,6 +29,17 @@ const Login = () => {
             if (response.data?.status === 200) {
                 const { token, name, role, email, branch, userId } = response.data.data;
                 localStorage.setItem('token', token);
+                localStorage.setItem('role', role); // e.g. "LIBRARIAN"
+                
+                // Extract branchId carefully to avoid [object Object]
+                let bId = '';
+                if (typeof branch === 'object' && branch !== null) {
+                    bId = branch.branchId || branch.id || branch._id || '';
+                } else {
+                    bId = branch || '';
+                }
+                localStorage.setItem('branchId', bId);
+                
                 localStorage.setItem('user', JSON.stringify({ name, role, email, branch, userId }));
 
                 // Redirect to dashboard

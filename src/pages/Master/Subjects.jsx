@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Edit2, Trash2Icon } from 'lucide-react';
+import { Search, Plus, Edit2, Trash2 } from 'lucide-react';
 import Modal from '../../components/Modal';
 import { Input, Select, Button } from '../../components/FormComponents';
 import TableSkeleton from '../../components/TableSkeleton';
@@ -12,6 +12,8 @@ const Subjects = () => {
     const [categories, setCategories] = useState([]);
     const [editingSubject, setEditingSubject] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [subjectToDelete, setSubjectToDelete] = useState(null);
 
     const [formData, setFormData] = useState({
         name: '',
@@ -68,17 +70,17 @@ const Subjects = () => {
         try {
             let res;
 
-            const queryParams = new URLSearchParams({
+            const payload = {
                 name: formData.name,
-                categoryId: formData.categoryId
-            }).toString();
+                categoryId: Number(formData.categoryId)
+            };
 
             if (editingSubject) {
                 // 🔄 UPDATE
-                res = await api.put(`/api/v1/admin/categories/subjects/${editingSubject.id}?${queryParams}`);
+                res = await api.put(`/api/v1/admin/categories/subjects/${editingSubject.id}`, payload);
             } else {
                 // ➕ CREATE
-                res = await api.post(`/api/v1/admin/categories/subjects?${queryParams}`);
+                res = await api.post('/api/v1/admin/categories/subjects', payload);
             }
 
             if (res.data?.status === 200 || res.status === 200) {
@@ -106,14 +108,18 @@ const Subjects = () => {
         setIsModalOpen(true);
     };
 
-    const handleDelete = async (id) => {
-        if (!confirm("Are you sure you want to delete this subject?")) return;
+    const handleDeleteClick = (subject) => {
+        setSubjectToDelete(subject);
+        setIsDeleteModalOpen(true);
+    };
 
+    const handleDeleteConfirm = async () => {
         try {
-            await api.delete(`/api/v1/admin/categories/subjects/${id}`);
+            await api.delete(`/api/v1/admin/categories/subjects/${subjectToDelete.id}`);
             toast.success('Subject deleted successfully!');
-            fetchSubjects(); // 🔥 refresh table
-
+            fetchSubjects();
+            setIsDeleteModalOpen(false);
+            setSubjectToDelete(null);
         } catch (error) {
             toast.error('Failed to delete subject.');
             console.error("Delete error:", error.response?.data || error);
@@ -219,10 +225,10 @@ const Subjects = () => {
                                                     <Edit2 size={14} />
                                                 </button>
                                                 <button
-                                                    onClick={() => handleDelete(s.id)}
+                                                    onClick={() => handleDeleteClick(s)}
                                                     className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition"
                                                 >
-                                                    <Trash2Icon size={14} />
+                                                    <Trash2 size={14} />
                                                 </button>
                                             </div>
                                         </td>
@@ -278,6 +284,22 @@ const Subjects = () => {
                 </form>
             </Modal>
 
+            {/* DELETE CONFIRMATION MODAL */}
+            <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} title="Confirm Delete">
+                <div className="space-y-6">
+                    <p className="text-[13px] text-slate-600">
+                        Are you sure you want to delete the subject <span className="font-bold text-slate-900">"{subjectToDelete?.name}"</span>? This action cannot be undone.
+                    </p>
+                    <div className="flex gap-3">
+                        <Button variant="secondary" className="flex-1" onClick={() => setIsDeleteModalOpen(false)}>
+                            Cancel
+                        </Button>
+                        <Button className="flex-1 bg-red-600 hover:bg-red-700 text-white" onClick={handleDeleteConfirm}>
+                            Delete
+                        </Button>
+                    </div>
+                </div>
+            </Modal>
         </div>
     );
 };

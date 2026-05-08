@@ -6,14 +6,14 @@ import TableSkeleton from '../../components/TableSkeleton';
 import api from '../../api/axios';
 import { toast } from 'react-toastify';
 
-const Categories = () => {
+const Language = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [viewingLanguage, setViewingLanguage] = useState(null);
+    const [editingLanguage, setEditingLanguage] = useState(null);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-    const [viewingCategory, setViewingCategory] = useState(null);
-    const [editingCategory, setEditingCategory] = useState(null);
-    const [categoryToDelete, setCategoryToDelete] = useState(null);
+    const [languageToDelete, setLanguageToDelete] = useState(null);
 
-    const [categories, setCategories] = useState([]);
+    const [languages, setLanguages] = useState([]);
     const [loading, setLoading] = useState(true);
 
     const [formData, setFormData] = useState({
@@ -23,62 +23,59 @@ const Categories = () => {
 
     // ✅ FETCH API
     useEffect(() => {
-        fetchCategories();
+        fetchLanguages();
     }, []);
 
-    const fetchCategories = async (showSkeleton = true) => {
+    const fetchLanguages = async (showSkeleton = true) => {
         if (showSkeleton) setLoading(true);
         try {
-            const res = await api.get('/api/v1/admin/categories');
-            // console.log("kordec",res);
+            // Assuming the endpoint follows the pattern /api/v1/admin/languages
+            const res = await api.get('/api/v1/admin/languages');
             if (res.data?.status === 200) {
-                const formattedData = res.data.data.map((c) => ({
-                    id: c.id,
-                    name: c.name,
-                    status: c.isActive ? 'Active' : 'Inactive'
+                const formattedData = res.data.data.map((l) => ({
+                    id: l.id,
+                    name: l.name,
+                    status: l.isActive ? 'Active' : 'Inactive'
                 }));
 
-                setCategories(formattedData);
+                setLanguages(formattedData);
             }
         } catch (error) {
-            console.error('Error fetching categories:', error);
+            console.error('Error fetching languages:', error);
+            // Fallback for demo if API fails
+            // setLanguages([{ id: 1, name: 'English', status: 'Active' }]);
         } finally {
             setLoading(false);
         }
     };
 
-    // ✅ POST & PUT CATEGORY
+    // ✅ POST & PUT LANGUAGE
     const handleSubmit = async (e) => {
         e.preventDefault();
 
         try {
             let res;
-            const params = {
-                name: formData.name.trim(),
+            const payload = {
+                name: formData.name,
                 isActive: formData.status === 'Active'
             };
 
-            if (editingCategory) {
-                // 🔄 UPDATE
-                res = await api.put(`/api/v1/admin/categories/${editingCategory.id}`, {}, { params });
+            if (editingLanguage) {
+                res = await api.put(`/api/v1/admin/languages/${editingLanguage.id}`, payload);
             } else {
-                // ➕ CREATE
-                res = await api.post('/api/v1/admin/categories', {}, { params });
+                res = await api.post('/api/v1/admin/languages', payload);
             }
 
-            if (res.data?.status === 200 || res.status === 200 || res.status === 201) {
-                toast.success(editingCategory ? 'Category updated successfully!' : 'Category added successfully!');
-                fetchCategories();
+            if (res.data?.status === 200 || res.status === 200) {
+                toast.success(editingLanguage ? 'Language updated successfully!' : 'Language added successfully!');
+                fetchLanguages();
                 resetForm();
                 setIsModalOpen(false);
-            } else {
-                toast.error(res.data?.message || 'Something went wrong.');
             }
 
         } catch (error) {
-            const errorMsg = error.response?.data?.message || (editingCategory ? 'Failed to update category.' : 'Failed to add category.');
-            toast.error(errorMsg);
-            console.error("Error saving category:", error.response?.data || error);
+            toast.error(editingLanguage ? 'Failed to update language.' : 'Failed to add language.');
+            console.error("Error saving language:", error);
         }
     };
 
@@ -87,45 +84,39 @@ const Categories = () => {
             name: '',
             status: 'Active'
         });
-        setEditingCategory(null);
+        setEditingLanguage(null);
     };
 
-    const handleEditClick = (c) => {
-        setEditingCategory(c);
-        setFormData(c);
+    const handleEditClick = (l) => {
+        setEditingLanguage(l);
+        setFormData(l);
         setIsModalOpen(true);
     };
 
-    const handleDeleteClick = (c) => {
-        setCategoryToDelete(c);
+    const handleDeleteClick = (l) => {
+        setLanguageToDelete(l);
         setIsDeleteModalOpen(true);
     };
 
     const handleDeleteConfirm = async () => {
         try {
-            await api.delete(`/api/v1/admin/categories/${categoryToDelete.id}`);
-            toast.success('Category deleted successfully!');
-            fetchCategories();
+            await api.delete(`/api/v1/admin/languages/${languageToDelete.id}`);
+            toast.success('Language deleted successfully!');
+            fetchLanguages();
             setIsDeleteModalOpen(false);
-            setCategoryToDelete(null);
+            setLanguageToDelete(null);
         } catch (error) {
-            const errorMsg = error.response?.data?.message || "";
-            if (errorMsg.toLowerCase().includes("subject") || error.response?.status === 400) {
-                toast.error('Cannot delete category. Subjects exist under this category.');
-            } else {
-                toast.error('Failed to delete category.');
-            }
-            console.error('Error deleting category:', error);
+            toast.error('Failed to delete language.');
+            console.error('Error deleting language:', error);
         }
     };
 
     const handleToggleStatus = async (id) => {
         try {
-            // Added an empty object {} in case the server requires a body even for a PATCH toggle
-            const res = await api.patch(`/api/v1/admin/categories/${id}/toggle`, {});
+            const res = await api.patch(`/api/v1/admin/languages/${id}/toggle`, {});
             if (res.data?.status === 200 || res.status === 200) {
                 toast.success('Status updated successfully!');
-                fetchCategories(false);
+                fetchLanguages(false);
             }
         } catch (error) {
             toast.error('Failed to update status.');
@@ -142,7 +133,7 @@ const Categories = () => {
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                     <input
                         type="text"
-                        placeholder="Search Category..."
+                        placeholder="Search Language..."
                         className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-[13px]"
                     />
                 </div>
@@ -160,7 +151,7 @@ const Categories = () => {
                         <thead>
                             <tr className="bg-slate-50/50 border-b border-slate-100">
                                 <th className="px-6 py-4 text-[9px] uppercase font-bold">Sr No</th>
-                                <th className="px-6 py-4 text-[9px] uppercase font-bold">Category Name</th>
+                                <th className="px-6 py-4 text-[9px] uppercase font-bold">Language Name</th>
                                 <th className="px-6 py-4 text-[9px] uppercase font-bold">Status</th>
                                 <th className="px-6 py-4 text-[9px] uppercase font-bold text-right">Actions</th>
                             </tr>
@@ -170,36 +161,35 @@ const Categories = () => {
                             {loading ? (
                                 <TableSkeleton rows={5} columns={4} />
                             ) : (
-                                categories.map((c, index) => (
-                                    <tr key={c.id} className="hover:bg-slate-50/50 group">
+                                languages.map((l, index) => (
+                                    <tr key={l.id} className="hover:bg-slate-50/50 group">
 
                                         <td className="px-6 py-4 text-[13px]">{index + 1}</td>
 
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-9 h-9 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600 font-bold text-[11px] border">
-                                                    {c.name?.[0]}
+                                                    {l.name?.[0]}
                                                 </div>
                                                 <div>
-                                                    <p className="font-bold text-slate-900 text-[13px]">{c.name}</p>
+                                                    <p className="font-bold text-slate-900 text-[13px]">{l.name}</p>
                                                 </div>
                                             </div>
                                         </td>
 
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2">
-                                                {/* Simple Toggle Design */}
                                                 <button
                                                     type="button"
-                                                    onClick={() => handleToggleStatus(c.id)}
-                                                    className={`w-9 h-5 flex items-center rounded-full p-1 transition-colors ${c.status === 'Active' ? 'bg-emerald-500 justify-end' : 'bg-slate-300 justify-start'
+                                                    onClick={() => handleToggleStatus(l.id)}
+                                                    className={`w-9 h-5 flex items-center rounded-full p-1 transition-colors ${l.status === 'Active' ? 'bg-emerald-500 justify-end' : 'bg-slate-300 justify-start'
                                                         }`}
                                                 >
                                                     <div className="w-3.5 h-3.5 bg-white rounded-full shadow-sm" />
                                                 </button>
 
-                                                <span className={`text-[11px] font-semibold ${c.status === 'Active' ? 'text-emerald-600' : 'text-slate-500'}`}>
-                                                    {c.status}
+                                                <span className={`text-[11px] font-semibold ${l.status === 'Active' ? 'text-emerald-600' : 'text-slate-500'}`}>
+                                                    {l.status}
                                                 </span>
                                             </div>
                                         </td>
@@ -207,21 +197,19 @@ const Categories = () => {
 
                                         <td className="px-6 py-4">
                                             <div className="flex items-center justify-end gap-1.5">
-                                                <button onClick={() => setViewingCategory(c)}
+                                                <button onClick={() => setViewingLanguage(l)}
                                                     className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition">
                                                     <Eye size={14} />
                                                 </button>
-                                                {/* EDIT */}
                                                 <button
-                                                    onClick={() => handleEditClick(c)}
+                                                    onClick={() => handleEditClick(l)}
                                                     className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition"
                                                 >
                                                     <Edit2 size={14} />
                                                 </button>
 
-                                                {/* DELETE */}
                                                 <button
-                                                    onClick={() => handleDeleteClick(c)}
+                                                    onClick={() => handleDeleteClick(l)}
                                                     className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition"
                                                 >
                                                     <Trash2 size={14} />
@@ -237,11 +225,11 @@ const Categories = () => {
             </div>
 
             {/* FORM MODAL */}
-            <Modal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); resetForm(); }} title={editingCategory ? "Edit Category" : "Add Category"}>
+            <Modal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); resetForm(); }} title={editingLanguage ? "Edit Language" : "Add Language"}>
                 <form onSubmit={handleSubmit} className="space-y-6">
 
                     <Input
-                        label="Category Name"
+                        label="Language Name"
                         value={formData.name}
                         onChange={e => setFormData({ ...formData, name: e.target.value })}
                         required
@@ -261,17 +249,33 @@ const Categories = () => {
                         <Button type="button" variant="secondary" className="flex-1" onClick={() => { setIsModalOpen(false); resetForm(); }}>
                             Cancel
                         </Button>
-                        <Button className="flex-1" type="submit">{editingCategory ? "Update" : "Save"}</Button>
+                        <Button className="flex-1" type="submit">{editingLanguage ? "Update" : "Save"}</Button>
                     </div>
 
                 </form>
+            </Modal>
+
+            {/* VIEW MODAL */}
+            <Modal isOpen={!!viewingLanguage} onClose={() => setViewingLanguage(null)} title="Language Details">
+                {viewingLanguage && (
+                    <div className="space-y-4 text-[13px]">
+                        <div>
+                            <p className="text-slate-400">Language Name</p>
+                            <p className="font-bold text-lg">{viewingLanguage.name}</p>
+                        </div>
+                        <div>
+                            <p className="text-slate-400">Status</p>
+                            <p className={`font-bold ${viewingLanguage.status === 'Active' ? 'text-emerald-600' : 'text-slate-500'}`}>{viewingLanguage.status}</p>
+                        </div>
+                    </div>
+                )}
             </Modal>
 
             {/* DELETE CONFIRMATION MODAL */}
             <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} title="Confirm Delete">
                 <div className="space-y-6">
                     <p className="text-[13px] text-slate-600">
-                        Are you sure you want to delete the category <span className="font-bold text-slate-900">"{categoryToDelete?.name}"</span>? This action cannot be undone.
+                        Are you sure you want to delete the language <span className="font-bold text-slate-900">"{languageToDelete?.name}"</span>? This action cannot be undone.
                     </p>
                     <div className="flex gap-3">
                         <Button variant="secondary" className="flex-1" onClick={() => setIsDeleteModalOpen(false)}>
@@ -287,4 +291,4 @@ const Categories = () => {
     );
 };
 
-export default Categories;
+export default Language;

@@ -14,6 +14,8 @@ const Users = () => {
     const [loading, setLoading] = useState(true);
     const [viewingUser, setViewingUser] = useState(null);
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [userToDelete, setUserToDelete] = useState(null);
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -74,7 +76,7 @@ const Users = () => {
     };
     const fetchBranches = async () => {
         try {
-            const res = await api.get('/api/v1/admin/branches');
+            const res = await api.get('/api/v1/admin/branches?onlyActive=true');
 
             if (res.data?.status === 200) {
                 setBranches(res.data.data || []);
@@ -129,13 +131,18 @@ const Users = () => {
         setIsModalOpen(true);
     };
 
-    const handleDelete = async (id) => {
-        if (!confirm("Delete this user?")) return;
+    const handleDeleteClick = (user) => {
+        setUserToDelete(user);
+        setIsDeleteModalOpen(true);
+    };
 
+    const handleDeleteConfirm = async () => {
         try {
-            await api.delete(`/api/v1/branch-admin/librarians/${id}`);
+            await api.delete(`/api/v1/branch-admin/librarians/${userToDelete.id}`);
             toast.success('User deleted successfully!');
             fetchUsers();
+            setIsDeleteModalOpen(false);
+            setUserToDelete(null);
         } catch (err) {
             toast.error('Failed to delete user.');
             console.error(err);
@@ -234,7 +241,7 @@ const Users = () => {
                                                 </button>
 
                                                 <button
-                                                    onClick={() => handleDelete(u.id)}
+                                                    onClick={() => handleDeleteClick(u)}
                                                     className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition"
                                                 >
                                                     <Trash2 size={14} />
@@ -328,6 +335,22 @@ const Users = () => {
 
                     </div>
                 )}
+            </Modal>
+             {/* DELETE CONFIRMATION MODAL */}
+            <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} title="Confirm Delete">
+                <div className="space-y-6">
+                    <p className="text-[13px] text-slate-600">
+                        Are you sure you want to delete the user <span className="font-bold text-slate-900">"{userToDelete?.name}"</span>? This action cannot be undone.
+                    </p>
+                    <div className="flex gap-3">
+                        <Button variant="secondary" className="flex-1" onClick={() => setIsDeleteModalOpen(false)}>
+                            Cancel
+                        </Button>
+                        <Button className="flex-1 bg-red-600 hover:bg-red-700 text-white" onClick={handleDeleteConfirm}>
+                            Delete
+                        </Button>
+                    </div>
+                </div>
             </Modal>
         </div>
     );

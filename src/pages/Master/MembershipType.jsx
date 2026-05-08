@@ -295,13 +295,15 @@ const MembershipType = () => {
 
             {/* DELETE CONFIRMATION MODAL */}
             <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} title="Confirm Delete">
-                <div className="space-y-4">
-                    <p className="text-slate-600 text-[14px]">Are you sure you want to delete the membership type <span className="font-bold text-slate-900">"{typeToDelete?.name}"</span>? This action cannot be undone.</p>
+                <div className="space-y-6">
+                    <p className="text-[13px] text-slate-600">
+                        Are you sure you want to delete the membership type <span className="font-bold text-slate-900">"{typeToDelete?.name}"</span>? This action cannot be undone.
+                    </p>
                     <div className="flex gap-3">
-                        <Button type="button" variant="secondary" className="flex-1" onClick={() => setIsDeleteModalOpen(false)}>
+                        <Button variant="secondary" className="flex-1" onClick={() => setIsDeleteModalOpen(false)}>
                             Cancel
                         </Button>
-                        <Button variant="danger" className="flex-1 bg-red-600 hover:bg-red-700 text-white" onClick={handleDeleteConfirm}>
+                        <Button className="flex-1 bg-red-600 hover:bg-red-700 text-white" onClick={handleDeleteConfirm}>
                             Delete
                         </Button>
                     </div>

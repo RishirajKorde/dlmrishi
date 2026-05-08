@@ -34,16 +34,6 @@ const Dashboard = () => {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    const userData = JSON.parse(localStorage.getItem('user') || '{}');
-    const userName = userData.name || 'Admin';
-
-    const getGreeting = () => {
-        const hour = new Date().getHours();
-        if (hour < 12) return 'Good Morning';
-        if (hour < 18) return 'Good Afternoon';
-        return 'Good Evening';
-    };
-
     const fetchDashboardData = async () => {
         setLoading(true);
         try {
@@ -75,7 +65,7 @@ const Dashboard = () => {
             {/* Header with Refresh */}
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900">{`${getGreeting()}, ${userName}`}</h1>
+                    <h1 className="text-2xl font-bold text-slate-900">Library Dashboard</h1>
                     {/* <p className="text-slate-500 text-sm">Welcome back, here's what's happening today.</p> */}
                 </div>
                 <button
@@ -164,8 +154,8 @@ const Dashboard = () => {
                                             <td className="px-6 py-4 text-slate-500 text-xs font-medium">{txn.date}</td>
                                             <td className="px-6 py-4">
                                                 <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border ${txn.type === 'ISSUE'
-                                                    ? 'bg-blue-50 text-blue-600 border-blue-100'
-                                                    : 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                                                        ? 'bg-blue-50 text-blue-600 border-blue-100'
+                                                        : 'bg-emerald-50 text-emerald-600 border-emerald-100'
                                                     }`}>
                                                     {txn.type}
                                                 </span>

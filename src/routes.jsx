@@ -13,10 +13,26 @@ import Users from './pages/Master/Users';
 import Categories from './pages/Master/Categories';
 import Subjects from './pages/Master/Subjects';
 import MembershipType from './pages/Master/MembershipType';
+import Language from './pages/Master/Language';
 import Login from './pages/Login';
 import Profile from './pages/Profile';
 import Fines from './pages/Fines';
 
+
+const ProtectedRoute = ({ children, allowedRoles }) => {
+  const isAuthenticated = !!localStorage.getItem('token');
+  const role = localStorage.getItem('role')?.toUpperCase();
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (allowedRoles && !allowedRoles.includes(role)) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return children;
+};
 
 const AppRoutes = () => {
   const isAuthenticated = !!localStorage.getItem('token');
@@ -24,26 +40,30 @@ const AppRoutes = () => {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
-      
       <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />} />
-      <Route path="/dashboard" element={<Dashboard />} />
-      <Route path="/catalogue" element={<Catalogue />} />
-      <Route path="/members" element={<Members />} />
-      <Route path="/transactions" element={<Transactions />} />
-      <Route path="/library" element={<DigitalLibrary />} />
+
+      {/* Shared Routes */}
+      <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+      <Route path="/catalogue" element={<ProtectedRoute><Catalogue /></ProtectedRoute>} />
+      <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
       <Route path="/search" element={<SearchPortal />} />
-      <Route path="/reports" element={<Reports />} />
-      <Route path="/roles" element={<Roles />} />
-      <Route path="/permissions" element={<Permissions />} />
-      <Route path="/branch" element={<Branch />} />
-      <Route path="/users" element={<Users />} />
-      <Route path="/Categories" element={<Categories />} />
-      <Route path="/Subjects" element={<Subjects />} />
-      <Route path="/membership-type" element={<MembershipType />} />
-      <Route path="/profile" element={<Profile />} />
-      <Route path="/fines" element={<Fines />} />
 
+      {/* Operational Routes */}
+      <Route path="/members" element={<ProtectedRoute allowedRoles={['SUPERADMIN', 'SUPER_ADMIN', 'LIBRARIAN', 'LIBRARIAN_ADMIN']}><Members /></ProtectedRoute>} />
+      <Route path="/transactions" element={<ProtectedRoute allowedRoles={['SUPERADMIN', 'SUPER_ADMIN', 'LIBRARIAN', 'LIBRARIAN_ADMIN']}><Transactions /></ProtectedRoute>} />
+      <Route path="/fines" element={<ProtectedRoute allowedRoles={['SUPERADMIN', 'SUPER_ADMIN', 'LIBRARIAN', 'LIBRARIAN_ADMIN']}><Fines /></ProtectedRoute>} />
+      <Route path="/library" element={<ProtectedRoute allowedRoles={['SUPERADMIN', 'SUPER_ADMIN', 'LIBRARIAN', 'LIBRARIAN_ADMIN']}><DigitalLibrary /></ProtectedRoute>} />
+      <Route path="/reports" element={<ProtectedRoute allowedRoles={['SUPERADMIN', 'SUPER_ADMIN', 'LIBRARIAN', 'LIBRARIAN_ADMIN']}><Reports /></ProtectedRoute>} />
 
+      {/* Master Routes */}
+      <Route path="/roles" element={<ProtectedRoute allowedRoles={['SUPERADMIN', 'SUPER_ADMIN']}><Roles /></ProtectedRoute>} />
+      <Route path="/permissions" element={<ProtectedRoute allowedRoles={['SUPERADMIN', 'SUPER_ADMIN']}><Permissions /></ProtectedRoute>} />
+      <Route path="/branch" element={<ProtectedRoute allowedRoles={['SUPERADMIN', 'SUPER_ADMIN']}><Branch /></ProtectedRoute>} />
+      <Route path="/users" element={<ProtectedRoute allowedRoles={['SUPERADMIN', 'SUPER_ADMIN']}><Users /></ProtectedRoute>} />
+      <Route path="/Categories" element={<ProtectedRoute allowedRoles={['SUPERADMIN', 'SUPER_ADMIN']}><Categories /></ProtectedRoute>} />
+      <Route path="/Subjects" element={<ProtectedRoute allowedRoles={['SUPERADMIN', 'SUPER_ADMIN']}><Subjects /></ProtectedRoute>} />
+      <Route path="/membership-type" element={<ProtectedRoute allowedRoles={['SUPERADMIN', 'SUPER_ADMIN']}><MembershipType /></ProtectedRoute>} />
+      <Route path="/Language" element={<ProtectedRoute allowedRoles={['SUPERADMIN', 'SUPER_ADMIN']}><Language /></ProtectedRoute>} />
 
       <Route path="*" element={<div className="p-8 text-center">404 - Page Not Found</div>} />
     </Routes>

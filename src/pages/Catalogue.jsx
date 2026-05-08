@@ -16,6 +16,7 @@ const Catalogue = () => {
   const [categories, setCategories] = useState([]);
   const [subjects, setSubjects] = useState([]);
   const [branches, setBranches] = useState([]);
+  const [languages, setLanguages] = useState([]);
   const [viewData, setViewData] = useState(null);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [isMembersModalOpen, setIsMembersModalOpen] = useState(false);
@@ -23,6 +24,11 @@ const Catalogue = () => {
   const [membersLoading, setMembersLoading] = useState(false);
   const [selectedBookTitle, setSelectedBookTitle] = useState('');
   const [isEditMode, setIsEditMode] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [bookToDelete, setBookToDelete] = useState(null);
+  const userRole = localStorage.getItem('role')?.toUpperCase();
+  const userBranchId = localStorage.getItem('branchId');
+
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     title: '',
@@ -36,13 +42,14 @@ const Catalogue = () => {
     edition: '',
     subject: '',
     language: '',
-    branch_id: ''
+    branch_id: (userRole !== 'SUPERADMIN' && userRole !== 'SUPER_ADMIN') ? userBranchId : ''
   });
 
   // ✅ Initial Load
   useEffect(() => {
     fetchCategories();
     fetchBranches();
+    fetchLanguages();
     fetchBooks(); // 🔥 important
   }, []);
 
@@ -105,14 +112,18 @@ const Catalogue = () => {
         totalCopies: b.totalCopies,
         status: b.status,
         isActive: b.isActive,
-        categoryId: b.categoryId,
-        subjectId: b.subjectId,
-        branchId: b.branchId,
+        categoryId: b.categoryId || b.category?.id,
+        subjectId: b.subjectId || b.subject?.id || b.subject?.subjectId,
+        branchId: b.branchId || b.branch?.id || b.branch?.branchId,
 
         statusColor:
           b.status === "AVAILABLE" ? "text-emerald-600 bg-emerald-50" :
             b.status === "ISSUED" ? "text-amber-600 bg-amber-50" :
-              "text-rose-600 bg-rose-50"
+              "text-rose-600 bg-rose-50",
+        publisher: b.publisher,
+        edition: b.edition,
+        languageId: b.languageId || b.language?.id,
+        languageName: b.languageName || b.language?.name || b.language
       }));
 
       setBooks(formatted);
@@ -126,7 +137,7 @@ const Catalogue = () => {
 
   const fetchCategories = async () => {
     try {
-      const res = await api.get('/api/v1/admin/categories');
+      const res = await api.get('/api/v1/admin/categories?onlyActive=true');
       setCategories(res.data.data);
     } catch (err) {
       console.error("Category error", err);
@@ -135,17 +146,26 @@ const Catalogue = () => {
 
   const fetchBranches = async () => {
     try {
-      const res = await api.get('/api/v1/admin/branches');
+      const res = await api.get('/api/v1/admin/branches?onlyActive=true');
       setBranches(res.data.data);
     } catch (err) {
       console.error("Branch error", err);
     }
   };
 
+  const fetchLanguages = async () => {
+    try {
+      const res = await api.get('/api/v1/admin/languages?onlyActive=true');
+      setLanguages(res.data.data || []);
+    } catch (err) {
+      console.error("Language error", err);
+    }
+  };
+
   const fetchSubjects = async (categoryId) => {
     try {
       const res = await api.get(
-        `/api/v1/admin/categories/by-category?categoryId=${categoryId}`
+        `/api/v1/admin/categories/by-category?categoryId=${categoryId}&onlyActive=true`
       );
       console.log("fetchsubjectRK", res)
       setSubjects(res.data.data);
@@ -208,10 +228,11 @@ const Catalogue = () => {
       author: formData.author,
       publisher: formData.publisher,
       edition: formData.edition,
-      categoryId: Number(formData.categoryId),
-      subjectId: Number(formData.subjectId),
-      branchId: Number(formData.branch_id),
+      categoryId: formData.categoryId ? Number(formData.categoryId) : null,
+      subjectId: formData.subjectId ? Number(formData.subjectId) : null,
+      branchId: formData.branch_id ? Number(formData.branch_id) : null,
       totalCopies: Number(formData.stockCount),
+      languageId: formData.language ? Number(formData.language) : null
     };
 
     try {
@@ -240,33 +261,58 @@ const Catalogue = () => {
   };
 
   const handleEdit = (book) => {
+    setViewData(book);
     setIsEditMode(true);
     setIsModalOpen(true);
-    setViewData(book);
+
+    // Refresh dependencies
+    fetchLanguages();
 
     // ✅ load subjects for selected category
-    fetchSubjects(book.categoryId);
+    if (book.categoryId) {
+      fetchSubjects(book.categoryId);
+    }
+
+    // 🔥 Find language ID by name if languageId is missing (fixes edit selection issue)
+    let langId = book.languageId;
+    if (!langId && book.languageName) {
+      const found = languages.find(l => l.name === book.languageName);
+      if (found) langId = found.id;
+    }
+
+    // 🔥 Find branch ID by name if branchId is missing (fixes edit selection issue)
+    let branchIdVal = book.branchId;
+    if (!branchIdVal && book.branchName) {
+      const found = branches.find(b => (b.branchName || b.name) === book.branchName);
+      if (found) branchIdVal = found.branchId || found.id;
+    }
 
     setFormData({
-      title: book.title,
-      author: book.author,
-      isbn: book.isbn,
+      title: book.title || '',
+      author: book.author || '',
+      isbn: book.isbn || '',
       categoryId: book.categoryId || '',
       subjectId: book.subjectId || '',
-      stockCount: book.totalCopies,
-      publisher: '',
-      edition: '',
-      branch_id: book.branchId
+      stockCount: book.totalCopies || '1',
+      publisher: book.publisher || '',
+      edition: book.edition || '',
+      branch_id: branchIdVal || '',
+      language: langId || ''
     });
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this book?")) return;
+  const handleDeleteClick = (book) => {
+    setBookToDelete(book);
+    setIsDeleteModalOpen(true);
+  };
 
+  const handleDeleteConfirm = async () => {
     try {
-      await api.delete(`/api/v1/admin/books/${id}`);
+      await api.delete(`/api/v1/admin/books/${bookToDelete.book_id}`);
       toast.success('Book deleted successfully!');
-      fetchBooks(); // refresh
+      fetchBooks();
+      setIsDeleteModalOpen(false);
+      setBookToDelete(null);
     } catch (err) {
       toast.error('Failed to delete book.');
       console.error("Delete error", err);
@@ -407,7 +453,7 @@ const Catalogue = () => {
                         </button>
 
                         <button
-                          onClick={() => handleDelete(book.book_id)}
+                          onClick={() => handleDeleteClick(book)}
                           className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition"
                           title="Delete Book"
                         >
@@ -427,36 +473,40 @@ const Catalogue = () => {
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Add New Book to Catalogue">
         <form onSubmit={handleAddBook} className="space-y-6">
 
-          <Input label="Book Title" value={formData.title}
+          <Input label="Book Title" value={formData.title} required
             onChange={e => setFormData({ ...formData, title: e.target.value })} />
 
-          <Input label="Author Name" value={formData.author}
+          <Input label="Author Name" value={formData.author} required
             onChange={e => setFormData({ ...formData, author: e.target.value })} />
 
-          <Input label="ISBN Number" value={formData.isbn}
+          <Input label="ISBN Number" value={formData.isbn} required
             onChange={e => setFormData({ ...formData, isbn: e.target.value })} />
 
-          <Input label="Total Copies" type="number" value={formData.stockCount}
+          <Input label="Total Copies" type="number" value={formData.stockCount} required
             onChange={e => setFormData({ ...formData, stockCount: e.target.value })} />
-          <Select
-            label="Branch"
-            value={formData.branch_id}
-            onChange={(e) =>
-              setFormData({ ...formData, branch_id: e.target.value })
-            }
-            options={[
-              { label: "Select Branch", value: "" }, // ✅ placeholder
-              ...branches.map(b => ({
-                label: b.branchName,
-                value: b.branchId
-              }))
-            ]}
-          />
+          {(userRole === 'SUPERADMIN' || userRole === 'SUPER_ADMIN') && (
+            <Select
+              label="Branch"
+              value={formData.branch_id}
+              required
+              onChange={(e) =>
+                setFormData({ ...formData, branch_id: e.target.value })
+              }
+              options={[
+                { label: "Select Branch", value: "" }, // ✅ placeholder
+                ...branches.map(b => ({
+                  label: b.branchName || b.name,
+                  value: b.branchId || b.id
+                }))
+              ]}
+            />
+          )}
 
           {/* Category */}
           <Select
             label="Category"
             value={formData.categoryId}
+            required
             onChange={(e) => {
               const selectedId = e.target.value;
 
@@ -481,17 +531,34 @@ const Catalogue = () => {
           <Select
             label="Subject"
             value={formData.subjectId}
+            required
             onChange={(e) =>
               setFormData({ ...formData, subjectId: e.target.value })
             }
             options={[
               { label: "Select Subject", value: "" }, // ✅ placeholder
               ...subjects.map(s => ({
-                label: s.subjectName,
-                value: s.subjectId
+                label: s.name || s.subjectName,
+                value: s.id || s.subjectId
               }))
             ]}
             disabled={!formData.categoryId} // ✅ important
+          />
+
+          <Select
+            label="Language"
+            value={formData.language}
+            required
+            onChange={(e) =>
+              setFormData({ ...formData, language: e.target.value })
+            }
+            options={[
+              { label: "Select Language", value: "" },
+              ...languages.map(l => ({
+                label: l.name,
+                value: l.id
+              }))
+            ]}
           />
 
 
@@ -564,6 +631,112 @@ const Catalogue = () => {
           <Button variant="secondary" className="w-full" onClick={() => setIsMembersModalOpen(false)}>
             Close
           </Button>
+        </div>
+      </Modal>
+
+      {/* View Book Modal */}
+      <Modal
+        isOpen={isViewOpen}
+        onClose={() => setIsViewOpen(false)}
+        title="Book Details"
+      >
+        {viewData && (
+          <div className="space-y-4 text-[13px]">
+            <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-xl border border-slate-100">
+              <div className="w-12 h-16 bg-blue-100 rounded flex items-center justify-center text-blue-600 border border-blue-200">
+                <BookIcon size={24} />
+              </div>
+              <div>
+                <p className="text-slate-400 text-[11px] uppercase font-bold tracking-wider">Book Title</p>
+                <p className="text-lg font-bold text-slate-900">{viewData.title}</p>
+                <p className="text-slate-500 font-medium">by {viewData.author}</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-3 bg-white border border-slate-100 rounded-lg">
+                <p className="text-slate-400 text-[10px] uppercase font-bold mb-1">ISBN</p>
+                <p className="font-mono font-bold text-slate-700">{viewData.isbn}</p>
+              </div>
+              <div className="p-3 bg-white border border-slate-100 rounded-lg">
+                <p className="text-slate-400 text-[10px] uppercase font-bold mb-1">Status</p>
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${viewData.statusColor}`}>
+                  {viewData.status}
+                </span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-3 bg-white border border-slate-100 rounded-lg">
+                <p className="text-slate-400 text-[10px] uppercase font-bold mb-1">Category</p>
+                <p className="font-bold text-slate-700">{viewData.categoryName}</p>
+              </div>
+              <div className="p-3 bg-white border border-slate-100 rounded-lg">
+                <p className="text-slate-400 text-[10px] uppercase font-bold mb-1">Subject</p>
+                <p className="font-bold text-slate-700">{viewData.subjectName}</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-3 bg-white border border-slate-100 rounded-lg">
+                <p className="text-slate-400 text-[10px] uppercase font-bold mb-1">Branch</p>
+                <p className="font-bold text-slate-700">{viewData.branchName}</p>
+              </div>
+              <div className="p-3 bg-white border border-slate-100 rounded-lg">
+                <p className="text-slate-400 text-[10px] uppercase font-bold mb-1">Language</p>
+                <p className="font-bold text-slate-700">{viewData.languageName || 'N/A'}</p>
+              </div>
+            </div>
+
+            <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+              <p className="text-slate-400 text-[10px] uppercase font-bold mb-3 text-center tracking-widest">Stock Information</p>
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <div className="flex flex-col">
+                  <span className="text-xs text-slate-500">Total</span>
+                  <span className="text-lg font-black text-slate-800">{viewData.totalCopies}</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-xs text-slate-500">Available</span>
+                  <span className="text-lg font-black text-emerald-600">{viewData.availableCopies}</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-xs text-slate-500">Issued</span>
+                  <span className="text-lg font-black text-amber-600">{viewData.issuedCopies}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-3 bg-white border border-slate-100 rounded-lg">
+                <p className="text-slate-400 text-[10px] uppercase font-bold mb-1">Publisher</p>
+                <p className="font-bold text-slate-700">{viewData.publisher || 'N/A'}</p>
+              </div>
+              <div className="p-3 bg-white border border-slate-100 rounded-lg">
+                <p className="text-slate-400 text-[10px] uppercase font-bold mb-1">Edition</p>
+                <p className="font-bold text-slate-700">{viewData.edition || 'N/A'}</p>
+              </div>
+            </div>
+
+            <Button variant="secondary" className="w-full mt-4" onClick={() => setIsViewOpen(false)}>
+              Close Details
+            </Button>
+          </div>
+        )}
+      </Modal>
+      {/* DELETE CONFIRMATION MODAL */}
+      <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} title="Confirm Delete">
+        <div className="space-y-6">
+          <p className="text-[13px] text-slate-600">
+            Are you sure you want to delete the book <span className="font-bold text-slate-900">"{bookToDelete?.title}"</span>? This action cannot be undone.
+          </p>
+          <div className="flex gap-3">
+            <Button variant="secondary" className="flex-1" onClick={() => setIsDeleteModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button className="flex-1 bg-red-600 hover:bg-red-700 text-white" onClick={handleDeleteConfirm}>
+              Delete
+            </Button>
+          </div>
         </div>
       </Modal>
     </div>

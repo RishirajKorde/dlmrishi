@@ -15,7 +15,7 @@ const Profile = () => {
     name: userData.name || '',
     email: userData.email || '',
     role: userData.role || '',
-    branch: userData.branch || ''
+    branch: (typeof userData.branch === 'object' ? userData.branch.branchName : userData.branch) || ''
   });
 
   const [isLoading, setIsLoading] = useState(false);

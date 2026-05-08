@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeftRight, Search, CheckCircle2, AlertTriangle, Clock, Book as BookIcon, Plus } from 'lucide-react';
-import { Button, Input, Select } from '../components/FormComponents';
+import { Button, Input, Select, SearchableSelect } from '../components/FormComponents';
 import { toast } from 'react-toastify';
 import api from '../api/axios';
 import TableSkeleton from '../components/TableSkeleton';
@@ -12,11 +12,13 @@ const Transactions = () => {
   const [branches, setBranches] = useState([]);
   const [members, setMembers] = useState([]);
   const [availableBooks, setAvailableBooks] = useState([]);
+  const userRole = localStorage.getItem('role')?.toUpperCase();
+  const userBranchId = localStorage.getItem('branchId');
 
   // Issue Form State
   const [issueForm, setIssueForm] = useState({
     memberId: '',
-    branchId: '',
+    branchId: (userRole !== 'SUPERADMIN' && userRole !== 'SUPER_ADMIN') ? userBranchId : '',
     bookIds: [] // Array of IDs
   });
 
@@ -28,6 +30,13 @@ const Transactions = () => {
 
   // Return Form State
   const [returnId, setReturnId] = useState('');
+
+  // Table Filters
+  const [tableMemberSearch, setTableMemberSearch] = useState('');
+  const [tableBookSearch, setTableBookSearch] = useState('');
+
+  // Modal Search
+  const [modalBookSearch, setModalBookSearch] = useState('');
 
   // Get current user ID for transactions
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
@@ -56,7 +65,7 @@ const Transactions = () => {
 
   const fetchBranches = async () => {
     try {
-      const res = await api.get('/api/v1/admin/branches');
+      const res = await api.get('/api/v1/admin/branches?onlyActive=true');
       setBranches(res.data.data || []);
     } catch (err) {
       console.error("Branch error", err);
@@ -203,21 +212,36 @@ const Transactions = () => {
   };
 
 
+  const filteredTransactions = transactions.filter(tx => {
+    const matchesMember = (tx.memberName || '').toLowerCase().includes(tableMemberSearch.toLowerCase()) || 
+                          String(tx.memberId || '').includes(tableMemberSearch);
+    const matchesBook = (tx.bookTitle || '').toLowerCase().includes(tableBookSearch.toLowerCase());
+    return matchesMember && matchesBook;
+  });
+
+  const filteredAvailableBooks = availableBooks
+    .filter(b => !issueForm.branchId || String(b.branchId) === String(issueForm.branchId))
+    .filter(b => 
+      (b.title || '').toLowerCase().includes(modalBookSearch.toLowerCase()) || 
+      (b.isbn || '').toLowerCase().includes(modalBookSearch.toLowerCase())
+    );
+
   return (
     <div className="space-y-8">
       {/* Member Selection / Global Search */}
       <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col md:flex-row items-center gap-6">
         <div className="flex-1 w-full">
-          <Select
+          <SearchableSelect
             label="Select Member"
             value={memberSearchId}
+            placeholder="Search member by name or ID..."
             onChange={e => {
               const id = e.target.value;
               setMemberSearchId(id);
               fetchMemberBooks(id);
             }}
             options={[
-              { label: "Choose a member to view issued books...", value: "" },
+              { label: "Choose a member...", value: "" },
               ...members.map(m => ({ label: `${m.name} (${m.membershipId})`, value: m.memberId || m.id }))
             ]}
           />
@@ -247,9 +271,10 @@ const Transactions = () => {
           </div>
 
           <form onSubmit={handleIssue} className="space-y-4">
-            <Select
+            <SearchableSelect
               label="Member"
               value={issueForm.memberId}
+              placeholder="Select Member"
               onChange={e => {
                 const id = e.target.value;
                 setIssueForm({ ...issueForm, memberId: id });
@@ -263,16 +288,18 @@ const Transactions = () => {
               required
             />
 
-            <Select
-              label="Branch"
-              value={issueForm.branchId}
-              onChange={e => setIssueForm({ ...issueForm, branchId: e.target.value })}
-              options={[
-                { label: "Select Branch", value: "" },
-                ...branches.map(b => ({ label: b.branchName, value: b.branchId }))
-              ]}
-              required
-            />
+            {(userRole === 'SUPERADMIN' || userRole === 'SUPER_ADMIN') && (
+              <Select
+                label="Branch"
+                value={issueForm.branchId}
+                onChange={e => setIssueForm({ ...issueForm, branchId: e.target.value })}
+                options={[
+                  { label: "Select Branch", value: "" },
+                  ...branches.map(b => ({ label: b.branchName, value: b.branchId }))
+                ]}
+                required
+              />
+            )}
 
             <div className="space-y-3">
               <label className="text-[13px] font-bold text-slate-700 ml-1">Select Books</label>
@@ -360,11 +387,36 @@ const Transactions = () => {
 
       {/* Recent Activity Log */}
       <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-slate-50 flex justify-between items-center">
-          <h3 className="font-bold text-slate-900">Recent Transactions</h3>
-          <button onClick={fetchTransactions} className="p-2 hover:bg-slate-50 rounded-lg text-blue-600 transition">
-            <Clock size={18} />
-          </button>
+        <div className="p-6 border-b border-slate-50 space-y-4">
+          <div className="flex justify-between items-center">
+            <h3 className="font-bold text-slate-900">Recent Transactions</h3>
+            <button onClick={fetchTransactions} className="p-2 hover:bg-slate-50 rounded-lg text-blue-600 transition">
+              <Clock size={18} />
+            </button>
+          </div>
+          
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+              <input
+                type="text"
+                placeholder="Filter by Member Name or ID..."
+                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-[13px] outline-none focus:border-blue-500 transition-all"
+                value={tableMemberSearch}
+                onChange={e => setTableMemberSearch(e.target.value)}
+              />
+            </div>
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+              <input
+                type="text"
+                placeholder="Filter by Book Title..."
+                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-[13px] outline-none focus:border-blue-500 transition-all"
+                value={tableBookSearch}
+                onChange={e => setTableBookSearch(e.target.value)}
+              />
+            </div>
+          </div>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
@@ -381,8 +433,8 @@ const Transactions = () => {
             <tbody className="divide-y divide-slate-50">
               {loading ? (
                 <TableSkeleton rows={5} columns={6} />
-              ) : transactions.length > 0 ? (
-                transactions.map((tx, idx) => (
+              ) : filteredTransactions.length > 0 ? (
+                filteredTransactions.map((tx, idx) => (
                   <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
                     <td className="px-6 py-4 text-[13px] text-slate-500">#{tx.transactionId}</td>
                     <td className="px-6 py-4">
@@ -439,11 +491,20 @@ const Transactions = () => {
         title="Select Books to Issue"
       >
         <div className="space-y-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+            <input
+              type="text"
+              placeholder="Search books by title or ISBN..."
+              className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-[13px] outline-none focus:border-blue-500 transition-all"
+              value={modalBookSearch}
+              onChange={e => setModalBookSearch(e.target.value)}
+            />
+          </div>
+
           <div className="max-h-[400px] overflow-y-auto pr-2 custom-scrollbar space-y-2">
-            {availableBooks.length > 0 ? (
-              availableBooks
-                .filter(b => !issueForm.branchId || String(b.branchId) === String(issueForm.branchId))
-                .map((b) => (
+            {filteredAvailableBooks.length > 0 ? (
+              filteredAvailableBooks.map((b) => (
                   <label
                     key={b.bookId}
                     className={`flex items-center gap-3 p-4 rounded-xl cursor-pointer transition-all border ${issueForm.bookIds.includes(String(b.bookId))

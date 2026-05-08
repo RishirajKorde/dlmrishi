@@ -12,16 +12,21 @@ const Members = () => {
   const [branches, setBranches] = useState([]);
   const [membershipTypes, setMembershipTypes] = useState([]);
   const [editingMember, setEditingMember] = useState(null);
+  const userRole = localStorage.getItem('role')?.toUpperCase();
+  const userBranchId = localStorage.getItem('branchId');
+
   const [viewingMember, setViewingMember] = useState(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isExpiredView, setIsExpiredView] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [memberToDelete, setMemberToDelete] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     mobile: '',
     aadhaarNumber: '',
-    branchId: '',
+    branchId: (userRole !== 'SUPERADMIN' && userRole !== 'SUPER_ADMIN') ? userBranchId : '',
     validityMonths: '',
     address: '',
     memberShipTypeId: '',
@@ -32,6 +37,17 @@ const Members = () => {
   const [isBooksModalOpen, setIsBooksModalOpen] = useState(false);
   const [loadingBooks, setLoadingBooks] = useState(false);
   const [selectedMemberName, setSelectedMemberName] = useState('');
+
+  // ✅ Helper to format months to Year/Month
+  const formatValidity = (months) => {
+    if (!months) return "0 Months";
+    const yrs = Math.floor(months / 12);
+    const mths = months % 12;
+    if (yrs > 0) {
+      return `${yrs} Year${yrs > 1 ? 's' : ''}${mths > 0 ? ` ${mths} Month${mths > 1 ? 's' : ''}` : ''}`;
+    }
+    return `${mths} Month${mths > 1 ? 's' : ''}`;
+  };
 
   // =========================
   // LOAD
@@ -48,8 +64,8 @@ const Members = () => {
   const fetchMembers = async (showSkeleton = true, useExpiredEndpoint = isExpiredView) => {
     if (showSkeleton) setLoading(true);
     try {
-      const endpoint = useExpiredEndpoint 
-        ? '/api/v1/branch-admin/librarians/members/expired' 
+      const endpoint = useExpiredEndpoint
+        ? '/api/v1/branch-admin/librarians/members/expired'
         : '/api/v1/branch-admin/librarians/members';
       const res = await api.get(endpoint);
 
@@ -105,7 +121,7 @@ const Members = () => {
   // =========================
   const fetchBranches = async () => {
     try {
-      const res = await api.get('/api/v1/admin/branches');
+      const res = await api.get('/api/v1/admin/branches?onlyActive=true');
 
       if (res.data?.status === 200) {
         setBranches(res.data.data || []);
@@ -117,7 +133,7 @@ const Members = () => {
 
   const fetchMembershipTypes = async () => {
     try {
-      const res = await api.get('/api/v1/admin/membership-type');
+      const res = await api.get('/api/v1/admin/membership-type?onlyActive=true');
       if (res.data?.status === 200) {
         setMembershipTypes(res.data.data || []);
       }
@@ -204,13 +220,18 @@ const Members = () => {
   // =========================
   // DELETE
   // =========================
-  const handleDelete = async (id) => {
-    if (!confirm("Are you sure you want to delete this member?")) return;
+  const handleDeleteClick = (m) => {
+    setMemberToDelete(m);
+    setIsDeleteModalOpen(true);
+  };
 
+  const handleDeleteConfirm = async () => {
     try {
-      await api.delete(`/api/v1/branch-admin/librarians/members/${id}`);
+      await api.delete(`/api/v1/branch-admin/librarians/members/${memberToDelete.id}`);
       toast.success('Member deleted successfully!');
       fetchMembers();
+      setIsDeleteModalOpen(false);
+      setMemberToDelete(null);
     } catch (error) {
       toast.error('Failed to delete member.');
       console.error(error);
@@ -240,7 +261,7 @@ const Members = () => {
       email: '',
       mobile: '',
       aadhaarNumber: '',
-      branchId: '',
+      branchId: (userRole !== 'SUPERADMIN' && userRole !== 'SUPER_ADMIN') ? userBranchId : '',
       validityMonths: '',
       address: '',
       memberShipTypeId: '',
@@ -335,7 +356,7 @@ const Members = () => {
                     </td>
 
                     <td className="px-6 py-4 text-[13px]">
-                      {m.validityMonths} Months
+                      {formatValidity(m.validityMonths)}
                     </td>
 
                     <td className="px-6 py-4">
@@ -376,7 +397,7 @@ const Members = () => {
                         </button>
 
                         <button
-                          onClick={() => handleDelete(m.id)}
+                          onClick={() => handleDeleteClick(m)}
                           className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition"
                         >
                           <Trash2Icon size={16} />
@@ -422,18 +443,20 @@ const Members = () => {
             value={formData.aadhaarNumber}
             onChange={e => setFormData({ ...formData, aadhaarNumber: e.target.value })} />
 
-          <Select
-            label="Branch"
-            value={formData.branchId}
-            onChange={e => setFormData({ ...formData, branchId: e.target.value })}
-            options={[
-              { label: 'Select Branch', value: '' },
-              ...branches.map(b => ({
-                label: b.branchName || b.name,
-                value: String(b.branchId || b.id || '')
-              }))
-            ]}
-          />
+          {(userRole === 'SUPERADMIN' || userRole === 'SUPER_ADMIN') && (
+            <Select
+              label="Branch"
+              value={formData.branchId}
+              onChange={e => setFormData({ ...formData, branchId: e.target.value })}
+              options={[
+                { label: 'Select Branch', value: '' },
+                ...branches.map(b => ({
+                  label: b.branchName || b.name,
+                  value: String(b.branchId || b.id || '')
+                }))
+              ]}
+            />
+          )}
 
           <Select
             label="Membership Type"
@@ -441,8 +464,8 @@ const Members = () => {
             onChange={e => {
               const typeId = e.target.value;
               const selectedType = membershipTypes.find(t => String(t.id) === String(typeId));
-              setFormData({ 
-                ...formData, 
+              setFormData({
+                ...formData,
                 memberShipTypeId: typeId,
                 validityMonths: selectedType ? selectedType.validityMonths : ''
               });
@@ -456,10 +479,10 @@ const Members = () => {
             ]}
           />
 
-          <Input 
-            label="Validity (Months)" 
-            value={formData.validityMonths} 
-            readOnly 
+          <Input
+            label="Validity"
+            value={formatValidity(formData.validityMonths)}
+            readOnly
             placeholder="Selected Type Validity"
           />
 
@@ -546,7 +569,7 @@ const Members = () => {
 
             <div>
               <p className="text-slate-400">Validity Period</p>
-              <p className="font-bold">{viewingMember.validityLabel} ({viewingMember.validityMonths} Months)</p>
+              <p className="font-bold">{viewingMember.validityLabel} ({formatValidity(viewingMember.validityMonths)})</p>
             </div>
 
             <div>
@@ -623,6 +646,22 @@ const Members = () => {
               <p>No books currently issued to this member.</p>
             </div>
           )}
+        </div>
+      </Modal>
+      {/* DELETE CONFIRMATION MODAL */}
+      <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} title="Confirm Delete">
+        <div className="space-y-6">
+          <p className="text-[13px] text-slate-600">
+            Are you sure you want to delete the member <span className="font-bold text-slate-900">"{memberToDelete?.name}"</span>? This action cannot be undone.
+          </p>
+          <div className="flex gap-3">
+            <Button variant="secondary" className="flex-1" onClick={() => setIsDeleteModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button className="flex-1 bg-red-600 hover:bg-red-700 text-white" onClick={handleDeleteConfirm}>
+              Delete
+            </Button>
+          </div>
         </div>
       </Modal>
     </div>
